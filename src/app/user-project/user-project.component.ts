@@ -270,7 +270,8 @@ refreshFiles(): void {
         const fileUrl = await this.uploadFile();
         console.log("fileUrl",fileUrl);
         if (fileUrl) {
-            this.handleProcessDocument(fileUrl);
+            // Backend will automatically process the document
+            //this.handleProcessDocument(fileUrl);
         } else {
             console.error("File URL is undefined or null.");
         }

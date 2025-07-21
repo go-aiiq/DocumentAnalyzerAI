@@ -195,15 +195,55 @@ res.json({response});
 
 });
 
+// Process document asynchronously with S3-based status tracking
+async function processDocument(fileUrl, originalFilename, userId, projectName) {
+  try {
+    // Ensure extractedData directory exists in S3
+    await s3Service.ensureExtractedDataDir(userId, projectName);
+    
+    // Save processing status
+    await s3Service.saveProcessingStatus(userId, projectName, originalFilename, 'processing', {
+      startTime: new Date().toISOString(),
+      fileUrl: fileUrl,
+      originalFilename: originalFilename
+    });
+
+    console.log('Processing document:', fileUrl);
+    
+    // Process the document
+    const result = await landingAI.analyzeDocument(fileUrl);
+    
+    // Save successful result
+    await s3Service.saveProcessingStatus(userId, projectName, originalFilename, 'json', {
+      success: true,
+      fileUrl: fileUrl,
+      originalFilename: originalFilename,
+      data: result
+    });
+    
+    console.log('Document processed successfully');
+    return { success: true, result };
+    
+  } catch (error) {
+    console.error('Error processing document:', error);
+    
+    // Save error details
+    await s3Service.saveProcessingStatus(userId, projectName, originalFilename, 'error', {
+      success: false,
+      error: error.message,
+      stack: error.stack
+    });
+    
+    return { success: false, error };
+  }
+}
+
 // File upload endpoint
 router.post('/upload', uploadMiddleware.single('file'), async (req, res) => {
   try {
     const userId = req.cookies.user_Id;
-    const projName=req.body.folderName?req.body.folderName:req.cookies.projectName;
-    // const projName = req.cookies.projectName;
-    // console.log("req.cookies: "+JSON.stringify(req.cookies));
-    // console.log("Inside document.js: "+userId);
-    // console.log("Project Name:"+ projName);
+    const projName = req.body.folderName ? req.body.folderName : req.cookies.projectName;
+    
     console.log('Upload request received:', {
       body: req.body,
       file: req.file ? {
@@ -212,7 +252,6 @@ router.post('/upload', uploadMiddleware.single('file'), async (req, res) => {
         size: req.file.size
       } : 'No file received',
       credentials: 'include'
-
     });
     
     if (!req.file) {
@@ -222,10 +261,6 @@ router.post('/upload', uploadMiddleware.single('file'), async (req, res) => {
         success: false 
       });
     }
-
-
-
-    
 
     // Validate file type
     if (req.file.mimetype !== 'application/pdf') {
@@ -237,12 +272,117 @@ router.post('/upload', uploadMiddleware.single('file'), async (req, res) => {
       });
     }
 
-    // Simulate S3 upload (in real implementation, this would upload to actual S3)
-    const fileUrl = await s3Service.uploadFile(req.file,userId,projName);
-
-    // Clean up local file after "upload"
+    // Upload to S3
+    const fileUrl = await s3Service.uploadFile(req.file, userId, projName);
+    
+    // Clean up local file after upload
     fs.unlinkSync(req.file.path);
 
+    // Validate the returned URL
+    if (!fileUrl || typeof fileUrl !== 'string') {
+      throw new Error('Invalid file URL returned from S3 upload');
+    }
+
+    try {
+      // Basic URL validation
+      new URL(fileUrl);
+    } catch (error) {
+      throw new Error(`Invalid file URL format: ${fileUrl}`);
+    }
+
+    console.log(`Starting document processing for: ${req.file.originalname}`);
+    
+    // Check if document is already being processed
+    const processingStatus = await s3Service.getProcessingStatus(userId, projName, req.file.originalname);
+    if (processingStatus) {
+      if (processingStatus.status === 'processing') {
+        console.warn(`Document is already being processed: ${req.file.originalname}`);
+      } else if (processingStatus.status === 'json') {
+        console.warn(`Document was already processed successfully: ${req.file.originalname}`);
+      } else if (processingStatus.status === 'error') {
+        console.warn(`Document previously failed processing: ${req.file.originalname}`);
+      }
+      
+      // For this implementation, we'll proceed with processing again
+      // You might want to change this behavior based on your requirements
+      console.log('Attempting to reprocess document...');
+    }
+
+    // Create a processing flag to prevent concurrent processing
+    const processingId = Date.now().toString();
+    await s3Service.saveProcessingStatus(userId, projName, req.file.originalname, 'processing', {
+      processingId,
+      startTime: new Date().toISOString(),
+      fileUrl: fileUrl,
+      originalFilename: req.file.originalname,
+      status: 'processing'
+    });
+
+    // Start async processing with error handling
+    let processCompleted = false;
+    const processPromise = processDocument(
+      { filename: fileUrl }, // Pass as object with filename property
+      req.file.originalname, 
+      userId, 
+      projName, 
+      processingId
+    )
+      .then(({ success, result, error }) => {
+        processCompleted = true;
+        if (success) {
+          console.log(`Document processed successfully: ${req.file.originalname}`);
+        } else {
+          console.error(`Document processing failed: ${req.file.originalname}`, error);
+        }
+        return { success, result, error };
+      })
+      .catch(async (err) => {
+        processCompleted = true;
+        console.error('Error in document processing pipeline:', err);
+        
+        // Save error status if not already done
+        try {
+          await s3Service.saveProcessingStatus(userId, projName, req.file.originalname, 'error', {
+            success: false,
+            processingId,
+            error: err.message,
+            stack: err.stack,
+            status: 'error',
+            endTime: new Date().toISOString()
+          });
+        } catch (saveErr) {
+          console.error('Failed to save error status:', saveErr);
+        }
+        
+        return { success: false, error: err };
+      });
+
+    // Set a timeout to clean up if processing hangs
+    const timeoutMs = 5 * 60 * 1000; // 5 minutes
+    const timeoutPromise = new Promise(resolve => {
+      setTimeout(async () => {
+        if (!processCompleted) {
+          console.error(`Processing timeout for document: ${req.file.originalname}`);
+          try {
+            await s3Service.saveProcessingStatus(userId, projName, req.file.originalname, 'error', {
+              success: false,
+              processingId,
+              error: 'Processing timed out',
+              status: 'error',
+              endTime: new Date().toISOString()
+            });
+          } catch (err) {
+            console.error('Failed to save timeout error status:', err);
+          }
+          resolve({ success: false, error: new Error('Processing timed out') });
+        }
+      }, timeoutMs);
+    });
+
+    // Race between processing and timeout
+    Promise.race([processPromise, timeoutPromise]);
+
+    // Immediately respond to client
     res.json({
       success: true,
       fileUrl: fileUrl,

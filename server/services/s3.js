@@ -82,13 +82,10 @@ class S3Service {
       console.log(`Uploading to S3: ${file.originalname} -> ${fileKey}`);
       
       const result = await this.s3.upload(uploadParams).promise();
-      const param={
-        Bucket:this.bucketname,
-        Key:fileKey
-      }
-      const r = await this.s3.getObject(param).promise
       console.log(`S3 upload successful: ${result.Location}`);
-      return r;
+      
+      // Return the public URL of the uploaded file
+      return result.Location;
 
     } catch (error) {
       console.error('S3 upload error:', error);
@@ -96,30 +93,124 @@ class S3Service {
     }
   }
 
-  async getFilesFolderwise(userId){
+  // Ensure extracted data directory exists in S3
+  async ensureExtractedDataDir(userId, projectName) {
+    const key = `${userId}/${projectName}/extractedData/.keep`;
+    try {
+      await this.s3.headObject({
+        Bucket: this.bucketName,
+        Key: key
+      }).promise();
+    } catch (error) {
+      if (error.code === 'NotFound') {
+        // Create the marker file
+        await this.s3.putObject({
+          Bucket: this.bucketName,
+          Key: key,
+          Body: '',
+          ContentType: 'text/plain'
+        }).promise();
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  // Save processing status to S3
+  async getProcessingStatus(userId, projectName, filename) {
+    const baseName = path.basename(filename, path.extname(filename));
+    const baseKey = `${userId}/${projectName}/extractedData/${baseName}`;
+    
+    // Check for different status files in order of priority
+    const statuses = ['processing', 'json', 'error'];
+    
+    for (const status of statuses) {
+      const key = `${baseKey}.${status}`;
+      try {
+        const result = await this.s3.getObject({
+          Bucket: this.bucketName,
+          Key: key
+        }).promise();
+        
+        if (result.Body) {
+          const data = JSON.parse(result.Body.toString());
+          return {
+            status,
+            ...data,
+            timestamp: result.LastModified?.toISOString() || new Date().toISOString()
+          };
+        }
+      } catch (error) {
+        if (error.code !== 'NoSuchKey') {
+          console.error(`Error reading status file ${key}:`, error);
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  async saveProcessingStatus(userId, projectName, filename, status, data = {}) {
+    const baseName = path.basename(filename, path.extname(filename));
+    const statusKey = `${userId}/${projectName}/extractedData/${baseName}.${status}`;
+    
+    const statusData = {
+      ...data,
+      timestamp: new Date().toISOString(),
+      status: status,
+      lastUpdated: new Date().toISOString()
+    };
+    
+    await this.s3.putObject({
+      Bucket: this.bucketName,
+      Key: statusKey,
+      Body: JSON.stringify(statusData),
+      ContentType: 'application/json'
+    }).promise();
+    
+    // If this is a completion status (json or error), clean up any .processing file
+    if (['json', 'error'].includes(status)) {
+      const processingKey = `${userId}/${projectName}/extractedData/${baseName}.processing`;
+      try {
+        await this.s3.deleteObject({
+          Bucket: this.bucketName,
+          Key: processingKey
+        }).promise();
+      } catch (error) {
+        // Ignore if processing file doesn't exist
+        if (error.code !== 'NoSuchKey') {
+          console.error('Error cleaning up processing file:', error);
+        }
+      }
+    }
+    
+    return statusData;
+  }
+
+  async getFilesFolderwise(userId) {
     const params = {
       Bucket: this.bucketName,
       Prefix: `${userId}/`
     };
-    try{
+    
+    try {
       const data = await this.s3.listObjectsV2(params).promise();
-      // console.log(data);
-      const folders={};
-      data.Contents.forEach(obj=>{
-       
+      const folders = {};
+      
+      data.Contents.forEach(obj => {
         const parts = obj.Key.split('/');
-        const subfolder = parts[1]; 
+        const subfolder = parts[1];
 
-        if(!folders[subfolder]) folders[subfolder] = [];
+        if (!folders[subfolder]) folders[subfolder] = [];
         folders[subfolder].push({
-          key:obj.Key,
-          size:obj.Size,
+          key: obj.Key,
+          size: obj.Size,
           lastModified: obj.LastModified,
           url: this.s3.getSignedUrl('getObject', {
-          Bucket: process.env.S3_BUCKET_NAME,
-          Key: obj.Key,
-          Expires: 300
-        })
+            Bucket: this.bucketName,
+            Key: obj.Key,
+            Expires: 300
+          })
         });
       });
       return folders;
