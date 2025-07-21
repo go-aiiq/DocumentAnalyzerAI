@@ -23,18 +23,22 @@
       <mat-list-item 
         *ngFor="let folder of folderNames"
         [class.active]="folder === selectedFolder"
-        (click)="$event.stopPropagation(); selectFolder(folder)">
-        <mat-icon matListIcon>folder</mat-icon>
-        <span class="folder-name">{{ folder }}</span>
-        <span class="file-count" *ngIf="getFileCount(folder) > 0">
-          {{ getFileCount(folder) }}
-        </span>
-        <button mat-icon-button 
-                class="delete-folder" 
-                (click)="$event.stopPropagation(); confirmDeleteFolder(folder)"
-                matTooltip="Delete folder">
-          <mat-icon>delete_outline</mat-icon>
-        </button>
+        (click)="$event.stopPropagation(); selectFolder(folder)"
+        class="folder-item">
+        <div class="folder-content">
+          <div class="folder-header">
+            <span class="folder-name">{{ folder }}</span>
+            <span class="file-count" *ngIf="getFileCount(folder) > 0">
+              {{ getFileCount(folder) }}
+            </span>
+          </div>
+          <button mat-icon-button 
+                  class="delete-folder" 
+                  (click)="$event.stopPropagation(); confirmDeleteFolder(folder)"
+                  matTooltip="Delete folder">
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+        </div>
       </mat-list-item>
       
       <div *ngIf="folderNames.length === 0" class="no-projects">
