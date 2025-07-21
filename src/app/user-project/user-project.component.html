@@ -68,13 +68,22 @@
               <mat-icon>cloud_upload</mat-icon>
               Upload Files
             </button>
+            <div class="file-info_upload" *ngIf="selectedFile">
+          <mat-icon>description</mat-icon>
+          <div class="file-details">
+            <span class="file-name">{{ selectedFile.name }}</span>
+            <span class="file-size">{{ getFileSize(selectedFile.size) }}</span>
           </div>
-          
           <div *ngIf="uploadProgress > 0 && uploadProgress < 100" class="upload-progress">
             <mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
             <span class="progress-text">{{ uploadProgress | number:'1.0-0' }}%</span>
           </div>
         </div>
+           
+        </div>
+          </div>
+          
+          
 
         <mat-list class="list-items" *ngIf="folders[selectedFolder]?.length; else noFiles">
           <ng-container *ngFor="let file of folders[selectedFolder]">
@@ -87,7 +96,8 @@
                   </div>
 
                   <div class="file-actions">
-                    <button mat-icon-button matTooltip="View" matTooltipPosition="below" (click)="getResults(file.url)">
+                    <!-- <button mat-icon-button matTooltip="View" matTooltipPosition="below" (click)="handleViewDocument(file.url)"> -->
+                      <button mat-icon-button matTooltip="View" matTooltipPosition="below" (click)="getResults(file.url)">
                       <mat-icon>visibility</mat-icon>
                     </button>
                     <a [href]="file.url" download>

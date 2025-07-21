@@ -82,9 +82,13 @@ class S3Service {
       console.log(`Uploading to S3: ${file.originalname} -> ${fileKey}`);
       
       const result = await this.s3.upload(uploadParams).promise();
-      
+      const param={
+        Bucket:this.bucketname,
+        Key:fileKey
+      }
+      const r = await this.s3.getObject(param).promise
       console.log(`S3 upload successful: ${result.Location}`);
-      return result.Location;
+      return r;
 
     } catch (error) {
       console.error('S3 upload error:', error);
@@ -129,6 +133,30 @@ class S3Service {
   }
   }
 
+
+  async readS3File(filename) {
+  try {
+    const decodedurl=decodeURIComponent(filename);
+    console.log("Inside: ",decodedurl.split('/').slice(3).join('/'));
+    const params = {
+      Bucket: this.bucketName,
+      // Prefix: 
+      Key:  decodedurl.split('.amazonaws.com/')[1].split('?')[0]
+    };
+
+    // Use getObject if you want the file content as a Buffer
+    // const data = await fetch(filename);
+    const data = await this.s3.getObject(params).promise();
+
+    console.log(`Successfully read ${filename} from S3` , data);
+    return data; // This is a Buffer containing file data
+
+  } catch (error) {
+    console.error(`Failed to read file: ${filename}`, error);
+    throw new Error(`Unable to retrieve file: ${error.message}`);
+  }
+}
+
   async getResults(folderPath,filename){
     // const urlParts = fileUrl.split('/');
       // const key = urlParts.slice(3).join('/');
@@ -164,11 +192,11 @@ class S3Service {
     }
   
   catch(e){
-    if (error.code === 'NotFound') {
+    if (e.code === 'NotFound') {
     console.error("File does not exist in bucket.");
     return false;
   } else {
-    console.error("Error checking file:", error.message);
+    console.error("Error checking file:", e.message);
   }
   console.log("Error ",e);
   return false;    
@@ -218,7 +246,7 @@ console.log(`message: Unsuccessful Upload`, err );
       
       const deleteParams = {
         Bucket: this.bucketName,
-        Key: key
+        Key: fileUrl
       };
 
       console.log(`Deleting from S3: ${key}`);

@@ -1,7 +1,7 @@
 // Angular core
 import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpEventType } from '@angular/common/http';
+import { HttpErrorResponse, HttpEventType } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { HttpClient } from '@angular/common/http';
@@ -255,15 +255,37 @@ refreshFiles(): void {
     }
   });
 }
-  onFileSelected(event: Event): void {
+  async onFileSelected(event: Event): Promise<void> {
     const target = event.target as HTMLInputElement;
     if (target.files && target.files.length > 0) {
       this.selectedFile = target.files[0] || null;
       this.selectedFilename=this.selectedFile.name;
       this.originalFileUrl = this.selectedFilename;
-      this.validateFile();
+      this.loading = true;
+      this.dataLoading = true;
+      this.error = '';
+      this.success = '';
+      try {
+
+        const fileUrl = await this.uploadFile();
+        console.log("fileUrl",fileUrl);
+        if (fileUrl) {
+            this.handleProcessDocument(fileUrl);
+        } else {
+            console.error("File URL is undefined or null.");
+        }
+        // this.handleProcessDocument(fileUrl);      
+        
+      } catch (err: any) {
+        console.error('Upload error:', err);
+        this.error = err.message || 'File upload failed';
+        this.loading = false;
+        this.dataLoading = false;
+      }
     }
-  }
+
+    }
+  
 
 validateFile(): void {
     if (!this.selectedFile) return;
@@ -337,15 +359,18 @@ validateFile(): void {
 //   // });
 // }
 
-uploadFile(): void {
-  if (!this.selectedFile) {
+uploadFile(): Promise<string>  {
+  return new Promise((resolve, reject) => {
+    if (!this.selectedFile) {
     this.snackBar.open('No file selected', 'Close', { duration: 3000 });
+     reject('No file selected');
     return;
   }
 
   // Validate file type (PDF only)
   if (this.selectedFile.type !== 'application/pdf') {
     this.snackBar.open('Only PDF files are allowed', 'Close', { duration: 3000 });
+    reject('Invalid file type');
     return;
   }
 
@@ -368,12 +393,24 @@ uploadFile(): void {
         // Upload complete
         this.snackBar.open('File uploaded successfully', 'Close', { duration: 3000 });
         this.refreshFiles();
-        this.selectedFile = null;
-        this.selectedFilename = '';
-        if (this.fileInput) {
-          this.fileInput.nativeElement.value = '';
-        }
+        // this.selectedFile = null;
+        // this.selectedFilename = '';
+        // if (this.fileInput) {
+        //   this.fileInput.nativeElement.value = '';
+        // }
         this.uploadProgress = 0;
+        
+        const fileUrl = event.body.fileUrl || event.body.url;
+          if (!fileUrl) {
+            reject('No file URL returned by server');
+          } else {
+            resolve(fileUrl);
+          }
+          this.selectedFile = null;
+          this.selectedFilename = '';
+          if (this.fileInput) {
+            this.fileInput.nativeElement.value = '';
+          }
       }
     },
     error: (err) => {
@@ -386,6 +423,8 @@ uploadFile(): void {
       this.loading = false;
     }
   });
+
+  })
 }
 
 
@@ -395,21 +434,44 @@ uploadFile(): void {
       this.error = '';
 
       const encodedFilename = encodeURIComponent(filename);
-      // const pdfUrl = `http://localhost:8000/api/view/${encodedFilename}`;
+      // console.log("selectdfile: ",this.selectedFile);
+      // const pdfUrl = `http://localhost:8000/api/view`;
       const pdfUrl = filename;
+      
 
       // Fetch using browser API (Fetch) or Angular HttpClient
-      const response = await fetch(pdfUrl, {
+      // const response = await fetch(pdfUrl, {
+      //   method: 'GET',
+      //   // credentials:'include',
+      //   headers: {
+      //     'Cache-Control': 'no-cache',
+      //     'Pragma': 'no-cache'
+      //   }
+      // });
+const response = await fetch(pdfUrl, {
         method: 'GET',
         headers: {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache'
-        }
+        },
+        // body: filename
       });
+//       this.http.post('http://localhost:8000/api/view', { filename }, { responseType: 'blob' }).subscribe({
+//   next: (blob: Blob) => {
+//     const blobUrl = URL.createObjectURL(blob);
+//     const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(blobUrl);
+//     this.currentPdf = safeUrl;
+//     this.viewerOpen = true;
+//   },
+//   error: async (error: HttpErrorResponse) => {
+//     const errorText = await error.error.text();
+//     console.error("Error fetching PDF:", errorText);
+//   }
+// });
 
-      if (!response.ok) {
-        throw new Error(`Failed to load PDF: ${response.status} ${response.statusText}`);
-      }
+      // if (!response.ok) {
+      //   throw new Error(`Failed to load PDF: ${response.status} ${response.statusText}`);
+      // }
 
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
@@ -434,6 +496,7 @@ uploadFile(): void {
   this.originalFileUrl = fileUrl;
   console.log("filename ",fileUrl);
   this.selectedFilename = this.getFileName(fileUrl);
+  // this.selectedFilename = fileUrl;
     if (!this.selectedFilename) return;
   
     this.loading = true;

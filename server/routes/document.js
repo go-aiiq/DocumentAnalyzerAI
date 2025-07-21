@@ -3,6 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
+const AWS = require('aws-sdk');
 
 const uploadMiddleware = require('../middleware/upload');
 const landingAIService = require('../services/landingai');
@@ -75,6 +76,53 @@ router.delete('/deleteFolder', async (req, res) => {
     });
   }
 });
+
+
+router.post('/delete', async (req, res) => {
+  try {
+    const { fileKey } = req.body; // Full path to the file in S3
+    const userId = req.cookies.user_Id;
+
+    if (!fileKey) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'File key is required' 
+      });
+    }
+
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        error: 'User not authenticated' 
+      });
+    }
+
+    console.log(`Deleting file: ${fileKey} for user: ${userId}`);
+    
+    const params = {
+      Bucket: "taai-uploaded-documents", // Change to your bucket name
+      Key: fileKey
+    };
+
+    const resp = await s3Service.deleteFile(fileKey);
+console.log("resp " , resp);
+    res.json({ 
+      success: true, 
+      message: `File ${fileKey} deleted successfully.` 
+    });
+
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to delete file',
+      details: error.message 
+    });
+  }
+});
+
+
+
 
 //get extractedData from s3
 router.post('/getExtractedData',async(req,res)=>{
@@ -153,9 +201,9 @@ router.post('/upload', uploadMiddleware.single('file'), async (req, res) => {
     const userId = req.cookies.user_Id;
     const projName=req.body.folderName?req.body.folderName:req.cookies.projectName;
     // const projName = req.cookies.projectName;
-    console.log("req.cookies: "+JSON.stringify(req.cookies));
-    console.log("Inside document.js: "+userId);
-    console.log("Project Name:"+ projName);
+    // console.log("req.cookies: "+JSON.stringify(req.cookies));
+    // console.log("Inside document.js: "+userId);
+    // console.log("Project Name:"+ projName);
     console.log('Upload request received:', {
       body: req.body,
       file: req.file ? {
@@ -277,54 +325,70 @@ router.post('/process',async(req,res)=>{
   }
 
 })
-router.get('/view/:filename', (req, res) => {
-  const filename = req.params.filename;
-  console.log(`Received request for file: ${filename}`);
-  console.log('Request headers:', req.headers);
+// router.get('/view/:filename', (req, res) => {
+//   const filename = req.params.filename;
+//   console.log(`Received request for file: ${filename}`);
+//   console.log('Request headers:', req.headers);
 
-  // const decodedFilename = path.basename(filename);
-  // const filepath = path.join(UPLOAD_DIR, decodedFilename);
-  // console.log(`Looking for file at: ${filepath}`);
-    const params = {
-    Bucket: "eu-north-1",
-    Key: filename
-  };
+//   // const decodedFilename = path.basename(filename);
+//   // const filepath = path.join(UPLOAD_DIR, decodedFilename);
+//   // console.log(`Looking for file at: ${filepath}`);
+//     const params = {
+//     Bucket: "eu-north-1",
+//     Key: filename
+//   };
 
 
+//   try {
+//     // if (!fs.existsSync(filepath)) {
+//     //   console.log(`File not found: ${filepath}`);
+//     //   return res.status(404).json({ detail: `File not found: ${decodedFilename}` });
+//     // }
+
+//     // if (!decodedFilename.toLowerCase().endsWith('.pdf')) {
+//     //   console.log(`Invalid file type: ${decodedFilename}`);
+//     //   return res.status(400).json({ detail: 'File is not a PDF' });
+//     // }
+
+//     // const fileSize = fs.statSync(filepath).size;
+//     // console.log(`Serving PDF: ${decodedFilename} (${fileSize} bytes)`);
+
+//     res.setHeader('Content-Type', 'application/pdf');
+//     res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+//     res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
+//     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+//     res.setHeader('Pragma', 'no-cache');
+//     res.setHeader('Expires', '0');
+// this.s3 = new AWS.S3();
+//     const fileStream =this.s3.getObject(params).createReadStream();
+//   fileStream.on('error', err => {
+//     console.error('S3 stream error:', err);
+//     res.status(404).json({ error: 'File not found' });
+//   });
+//   fileStream.pipe(res);
+// }
+//  catch (err) {
+//     console.error('Unexpected error:', err);
+//     res.status(500).json({ detail: `Internal server error: ${err.message}` });
+//   }
+// });
+
+
+
+router.post('/view',async (req,res)=>{
+
+  const fileurl = req.body.filename;
+  console.log("FILENAME: " , fileurl);
   try {
-    // if (!fs.existsSync(filepath)) {
-    //   console.log(`File not found: ${filepath}`);
-    //   return res.status(404).json({ detail: `File not found: ${decodedFilename}` });
-    // }
-
-    // if (!decodedFilename.toLowerCase().endsWith('.pdf')) {
-    //   console.log(`Invalid file type: ${decodedFilename}`);
-    //   return res.status(400).json({ detail: 'File is not a PDF' });
-    // }
-
-    // const fileSize = fs.statSync(filepath).size;
-    // console.log(`Serving PDF: ${decodedFilename} (${fileSize} bytes)`);
-
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-    res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-
-    const fileStream =s3Service.getObject(params).createReadStream();
-  stream.on('error', err => {
-    console.error('S3 stream error:', err);
-    res.status(404).json({ error: 'File not found' });
-  });
-  stream.pipe(res);
-}
- catch (err) {
-    console.error('Unexpected error:', err);
-    res.status(500).json({ detail: `Internal server error: ${err.message}` });
+    const fileData = await s3Service.readS3File(fileurl);
+    res.setHeader('Content-Type', 'application/pdf'); // or appropriate MIME type
+    console.log(fileData);
+    res.send(fileData);
+  } catch (err) {
+  console.log("Error: " ,err);
+    res.status(500).json({ error: err.message });
   }
-});
-
+})
 
 
 
