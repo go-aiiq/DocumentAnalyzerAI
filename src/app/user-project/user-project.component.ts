@@ -44,8 +44,7 @@ import { FileSizePipe } from '../pipes/file-size.pipe';
     MatProgressSpinnerModule,
     MatSnackBarModule,
     MatTooltipModule,
-    FileSizePipe,
-    ConfirmDialogComponent
+    FileSizePipe
   ],
   templateUrl: './user-project.component.html',
   styleUrl: './user-project.component.scss'
@@ -87,51 +86,58 @@ export class UserProjectComponent {
 
   }
 
-  ngOnInit():void{
+  ngOnInit(): void {
+    // Set default view to dashboard
+    this.selectedFolder = 'Project';
     
-    this.documentService.getFiles().subscribe(res => {
-      console.log("response: " , res);
+    // Load folders and files
+    this.loadFolders();
+  }
+
+  /**
+   * Loads folders and their files from the server
+   */
+  private loadFolders(): void {
+    this.loading = true;
+    this.documentService.getFiles().subscribe({
+      next: (res) => {
+        this.loading = false;
+        if (res && res.response) {
+          this.folders = res.response;
+          const filteredFolders: { [folderName: string]: any[] } = {};
           
-    
-
-    // Loop through each folder and filter its files
-    
-
-      
-      if (res && res.response) {
-    this.folders = res.response;
-    const filteredFolders: { [folderName: string]: any[] } = {};
-    Object.keys(this.folders).forEach(folderName => {
-      const pdfFiles = this.folders[folderName].filter(file =>
-        typeof file.key === 'string' && file.key.toLowerCase().endsWith('.pdf')|| file.key.endsWith('/')
-      );
-      if (pdfFiles.length > 0) {
-        filteredFolders[folderName] = pdfFiles;
+          // Filter folders to only include those with PDF files
+          Object.keys(this.folders).forEach(folderName => {
+            const pdfFiles = this.folders[folderName].filter(file =>
+              typeof file.key === 'string' && (file.key.toLowerCase().endsWith('.pdf') || file.key.endsWith('/'))
+            );
+            if (pdfFiles.length > 0) {
+              filteredFolders[folderName] = pdfFiles;
+            }
+          });
+          
+          this.folders = filteredFolders;
+          this.folderNames = Object.keys(this.folders);
+        } else {
+          console.warn('No folders available');
+          this.folders = {};
+          this.folderNames = [];
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        console.error('Error loading folders:', error);
+        this.snackBar.open('Failed to load properties', 'Close', { duration: 3000 });
+        this.folders = {};
+        this.folderNames = [];
       }
     });
-    this.folders=filteredFolders;
-    this.folderNames = Object.keys(this.folders);
-    this.selectedFolder = 'Project';
-  } else {
-    console.warn('No folders available');
-    this.folders = {};
-    this.folderNames = [];
-    this.selectedFolder = 'Project';
   }
-});
 
-  }
-  // containsFiles():boolean{
-  //   const files = this.folders[this.selectedFolder].filter(file => file.key.endsWith('/'))
-  //   return files.length?false:true;
-  // }
   containsFiles(): boolean {
-  const files = this.folders[this.selectedFolder];
-  return Array.isArray(files) && files.some(file => !file.key.endsWith('/'));
-}
-
-// const files = folders[selectedFolder].filter(file => !file.key.endsWith('/'));
-
+    const files = this.folders[this.selectedFolder];
+    return Array.isArray(files) && files.some(file => !file.key.endsWith('/'));
+  }
 
   getFileName(key: string): string {
      return key.split('/').pop() || key;
@@ -139,10 +145,15 @@ export class UserProjectComponent {
 
 
   selectFolder(folder: string): void {
+    // Only update the selected folder without refreshing files
     this.selectedFolder = folder;
     this.selectedFile = null;
     this.selectedFilename = '';
-    this.refreshFiles();
+    
+    // Only refresh files if not selecting the dashboard
+    if (folder !== 'Project') {
+      this.refreshFiles();
+    }
   }
 
   confirmDeleteFolder(folderName: string): void {
@@ -166,6 +177,7 @@ export class UserProjectComponent {
     this.loading = true;
     this.documentService.deleteFolder(folderName).subscribe({
       next: () => {
+        this.loading = false;
         this.snackBar.open(`Property "${folderName}" deleted successfully`, 'Close', { duration: 3000 });
         
         // If the deleted folder was selected, reset to dashboard
@@ -175,10 +187,12 @@ export class UserProjectComponent {
           this.selectedFilename = '';
         }
         
-        // Refresh the folder list
-        this.refreshFiles();
+        // Reload the folders to reflect the deletion
+        this.loadFolders();
       },
       error: (error) => {
+        this.loading = false;
+        this.snackBar.open(`Failed to delete property: ${error.message}`, 'Close', { duration: 5000 });
         console.error('Error deleting folder:', error);
         this.snackBar.open(`Failed to delete property "${folderName}"`, 'Close', { duration: 3000 });
         this.loading = false;
