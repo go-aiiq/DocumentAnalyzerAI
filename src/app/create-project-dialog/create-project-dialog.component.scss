@@ -1,0 +1,47 @@
+// .createProject button 
+// {
+//     background: linear-gradient(45deg, #667eea, #764ba2); /* vibrant gradient */
+//   color: white;
+//   font-weight: bold;
+// }
+/* Dialog Title */
+h2[mat-dialog-title] {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #333;
+  padding:15px;
+}
+
+/* Dialog Content */
+mat-dialog-content {
+  padding:  14px;
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Section Wrapper */
+.create-project-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Full Width Form Field */
+// .full-width {
+//   width: 100%;
+// }
+
+/* Form Field Styling */
+// mat-form-field {
+//   margin-bottom: 16px;
+// }
+
+/* Submit Button */
+button[type="submit"] {
+  align-self: flex-start;
+  padding: 14px;
+  margin-left: 20px;
+  font-weight: 500;
+  color: white;
+  background-color: #333;
+}

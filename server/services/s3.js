@@ -1,0 +1,296 @@
+const AWS = require('aws-sdk');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
+const user = require('../server.js');
+
+
+class S3Service {
+  constructor() {
+    this.bucketName = process.env.S3_BUCKET_NAME;
+    this.region = process.env.AWS_REGION;
+    
+    // Validate required environment variables
+    if (!this.bucketName || !this.region || !process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+      console.warn('AWS credentials not found. Using mock S3 service.');
+      this.mockMode = true;
+    } else {
+      this.mockMode = false;
+      
+      // Configure AWS SDK
+      AWS.config.update({
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        region: this.region
+      });
+      
+      this.s3 = new AWS.S3();
+      console.log(`S3 Service initialized for bucket: ${this.bucketName} in region: ${this.region}`);
+    }
+  }
+
+  async createFolder(userId,projectname){
+    
+      const folder =`${userId}/${projectname}/`;
+      const params = {
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: folder,
+        Body: '', // zero-byte object
+      };
+      try{
+        const response = await this.s3.putObject(params).promise();
+        console.log(response);
+        //  res.json({ message: `Project '${folderName}' created!` }); 
+
+    }
+  
+  catch(e){
+    console.error('Error creating folder:', e);
+    
+    }
+  }
+  async uploadFile(file , userId , projectName) {
+    try {
+      // const fileKey = `documents/${uuidv4()}-${file.originalname}`;
+      // parseCookies()
+      // this.userId = cookies['userId'];
+      // this.userid= user.userId;
+      const fileKey = `${userId}/${projectName}/${file.originalname}`;
+      console.log(`the file directory : ${userId}/${projectName}/${file.originalname}`);
+      
+      if (this.mockMode) {
+        // Mock mode for development
+        await this.delay(1000);
+        const mockS3Url = `https://${this.bucketName || 'ta-ai-documents'}.s3.${this.region || 'us-east-1'}.amazonaws.com/${fileKey}`;
+        console.log(`Mock S3 upload: ${file.originalname} -> ${mockS3Url}`);
+        return mockS3Url;
+      }
+      
+      // Real S3 upload
+      const uploadParams = {
+        Bucket: this.bucketName,
+        Key: fileKey,
+        Body: require('fs').readFileSync(file.path),
+        ContentType: file.mimetype,
+        // ACL removed - bucket has ACLs disabled, using bucket policy instead
+        Metadata: {
+          'original-name': file.originalname,
+          'upload-time': new Date().toISOString(),
+          'content-type': file.mimetype
+        }
+      };
+
+      console.log(`Uploading to S3: ${file.originalname} -> ${fileKey}`);
+      
+      const result = await this.s3.upload(uploadParams).promise();
+      
+      console.log(`S3 upload successful: ${result.Location}`);
+      return result.Location;
+
+    } catch (error) {
+      console.error('S3 upload error:', error);
+      throw new Error(`Failed to upload file to S3: ${error.message}`);
+    }
+  }
+
+  async getFilesFolderwise(userId){
+    const params = {
+      Bucket: this.bucketName,
+      Prefix: `${userId}/`
+    };
+    try{
+      const data = await this.s3.listObjectsV2(params).promise();
+      // console.log(data);
+      const folders={};
+      data.Contents.forEach(obj=>{
+       
+        const parts = obj.Key.split('/');
+        const subfolder = parts[1]; 
+
+        if(!folders[subfolder]) folders[subfolder] = [];
+        folders[subfolder].push({
+          key:obj.Key,
+          size:obj.Size,
+          lastModified: obj.LastModified,
+          url: this.s3.getSignedUrl('getObject', {
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: obj.Key,
+          Expires: 300
+        })
+        });
+      });
+      return folders;
+      // res.json({ folders: folders });
+    }
+     catch(err){
+      console.error('Error grouping files:', err);
+      throw err;
+      // res.status(500).json({ error: 'Failed to group files' });
+
+  }
+  }
+
+  async getResults(folderPath,filename){
+    // const urlParts = fileUrl.split('/');
+      // const key = urlParts.slice(3).join('/');
+      
+    const params= {
+      Bucket: this.bucketName,
+      Prefix: `${folderPath}/`,
+      MaxKeys:1
+    }
+    
+    const param ={
+      Bucket: this.bucketName,
+      Key: `${folderPath}/${filename}.json`,
+    }
+    try{
+      // const urlParts = fileUrl.split('/');
+      // const key = urlParts.slice(3).join('/');
+      // if (key.contains('extractedData')){
+      await this.s3.headObject(param).promise();
+        const resp = await this.s3.listObjectsV2(params).promise();
+         
+        if(resp.KeyCount){
+          console.log("Bucket Exists");
+          const response = await this.s3.getObject(param).promise();
+          const fileContent = response.Body.toString('utf-8');
+          console.log("Response: ",response.fileContent);
+          return fileContent;
+        }
+        else{
+          return false;
+        }
+      // }
+    }
+  
+  catch(e){
+    if (error.code === 'NotFound') {
+    console.error("File does not exist in bucket.");
+    return false;
+  } else {
+    console.error("Error checking file:", error.message);
+  }
+  console.log("Error ",e);
+  return false;    
+  }}
+ 
+  async storeResults(folderPath,fileName,jsonString){
+    try{
+      // const userId = req.cookie()
+      const params = {
+    Bucket: this.bucketName,
+    Key: `${folderPath}extractedData/${fileName}.json`, // Unique filename
+    Body: jsonString,
+    ContentType: 'application/json'
+  };
+   const result = await this.s3.upload(params).promise();
+  //  console.log(`message: Upload successful, ${result.Location} `);
+  return result;
+  
+}catch(err){
+console.log(`message: Unsuccessful Upload`, err );
+}
+  }
+
+  // async getResult(folderPath,fileName){
+  //    const params = {
+  //   Bucket: bucketName,
+  //   Key: key
+  // };
+  //   const data = await this.s3.getObject(params).promise();
+  //   return data.Body;
+
+  // }
+
+
+  async deleteFile(fileUrl) {
+    try {
+      if (this.mockMode) {
+        // Mock mode for development
+        await this.delay(500);
+        console.log(`Mock S3 delete: ${fileUrl}`);
+        return true;
+      }
+      
+      // Extract key from S3 URL
+      const urlParts = fileUrl.split('/');
+      const key = urlParts.slice(3).join('/'); // Remove https://bucket.s3.region.amazonaws.com/
+      
+      const deleteParams = {
+        Bucket: this.bucketName,
+        Key: key
+      };
+
+      console.log(`Deleting from S3: ${key}`);
+      
+      await this.s3.deleteObject(deleteParams).promise();
+      
+      console.log(`S3 delete successful: ${key}`);
+      return true;
+
+    } catch (error) {
+      console.error('S3 delete error:', error);
+      throw new Error(`Failed to delete file from S3: ${error.message}`);
+    }
+  }
+
+  async getFileMetadata(fileUrl) {
+    try {
+      // Simulate metadata retrieval
+      await this.delay(300);
+
+      return {
+        url: fileUrl,
+        size: Math.floor(Math.random() * 1000000) + 100000, // Random size
+        lastModified: new Date().toISOString(),
+        contentType: 'application/pdf',
+        etag: `"${uuidv4()}"`,
+        versionId: uuidv4()
+      };
+
+    } catch (error) {
+      console.error('S3 metadata error:', error);
+      throw new Error('Failed to get file metadata');
+    }
+  }
+
+  async generatePresignedUrl(fileUrl, expiresIn = 3600) {
+    try {
+      if (this.mockMode) {
+        // Mock mode for development
+        await this.delay(200);
+        const timestamp = Date.now();
+        const signature = uuidv4();
+        const presignedUrl = `${fileUrl}?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=mock&X-Amz-Date=${timestamp}&X-Amz-Expires=${expiresIn}&X-Amz-Signature=${signature}`;
+        return presignedUrl;
+      }
+      
+      // Extract key from S3 URL
+      const urlParts = fileUrl.split('/');
+      const key = urlParts.slice(3).join('/'); // Remove https://bucket.s3.region.amazonaws.com/
+      
+      const params = {
+        Bucket: this.bucketName,
+        Key: key,
+        Expires: expiresIn
+      };
+
+      console.log(`Generating presigned URL for: ${key}`);
+      
+      const presignedUrl = await this.s3.getSignedUrlPromise('getObject', params);
+      
+      console.log(`Presigned URL generated successfully`);
+      return presignedUrl;
+
+    } catch (error) {
+      console.error('Presigned URL generation error:', error);
+      throw new Error(`Failed to generate presigned URL: ${error.message}`);
+    }
+  }
+
+  delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
+
+module.exports = new S3Service();

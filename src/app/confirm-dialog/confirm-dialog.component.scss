@@ -1,0 +1,35 @@
+:host {
+  display: block;
+  min-width: 300px;
+}
+
+mat-dialog-actions {
+  padding: 8px 24px 16px;
+  
+  button {
+    text-transform: uppercase;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    
+    &[color="warn"] {
+      margin-left: 8px;
+    }
+  }
+}
+
+mat-dialog-content {
+  padding: 16px 24px;
+  margin: 0;
+  color: rgba(0, 0, 0, 0.87);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+mat-dialog-title {
+  margin: 0;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.87);
+}

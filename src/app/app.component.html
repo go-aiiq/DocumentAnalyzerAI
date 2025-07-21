@@ -1,0 +1,21 @@
+<div class="app-container">
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Modern Header with Logo and Logout -->
+      <header class="header">
+        <div class="header-content">
+          <div class="logo-container">
+            <div class="logo">
+              <span class="logo-text">TC AI</span>
+              <span class="logo-subtext">Document Analyzer</span>
+            </div>
+          </div>
+          <button mat-button class="logout-button" (click)="onLogout()" aria-label="Logout">
+            <mat-icon>logout</mat-icon>
+            <span class="logout-text">Logout</span>
+          </button>
+        </div>
+      </header>
+    <router-outlet></router-outlet>
+  </main>
+</div>

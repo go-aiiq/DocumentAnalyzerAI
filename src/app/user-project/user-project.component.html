@@ -1,0 +1,192 @@
+<div class="project-container">
+  <!-- Sidebar -->
+  <aside class="project-sidebar">
+    <div class="sidebar-header">
+      <h2>Property Hub</h2>
+      <button mat-raised-button class="create-btn" (click)="openCreateDialog()">
+        <mat-icon>add</mat-icon> New Property
+      </button>
+    </div>
+
+    <mat-nav-list class="project-list">
+      <mat-list-item class="dashboard-item"
+        [class.active]="'Project' === selectedFolder"
+        (click)="selectFolder('Project')">
+        <mat-icon matListIcon>dashboard</mat-icon>
+        <span class="folder-name">Dashboard</span>
+      </mat-list-item>
+
+      <mat-divider></mat-divider>
+      
+      <h3 class="sidebar-section-title">My Properties</h3>
+      
+      <mat-list-item 
+        *ngFor="let folder of folderNames"
+        [class.active]="folder === selectedFolder"
+        (click)="$event.stopPropagation(); selectFolder(folder)">
+        <mat-icon matListIcon>folder</mat-icon>
+        <span class="folder-name">{{ folder }}</span>
+        <span class="file-count" *ngIf="getFileCount(folder) > 0">
+          {{ getFileCount(folder) }}
+        </span>
+        <button mat-icon-button 
+                class="delete-folder" 
+                (click)="$event.stopPropagation(); confirmDeleteFolder(folder)"
+                matTooltip="Delete folder">
+          <mat-icon>delete_outline</mat-icon>
+        </button>
+      </mat-list-item>
+      
+      <div *ngIf="folderNames.length === 0" class="no-projects">
+        <mat-icon>create_new_folder</mat-icon>
+        <p>No properties yet</p>
+        <button mat-button color="primary" (click)="openCreateDialog()">
+          Create your first property transaction
+        </button>
+      </div>
+    </mat-nav-list>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="project-content">
+    <ng-container *ngIf="selectedFolder; else noFolderSelected">
+      <div class="file-list">
+        <ng-container *ngIf="selectedFolder !== 'Project'; else dashboardView">
+          <h3>Files in "{{ selectedFolder }}"</h3>
+        </ng-container>
+        <ng-template #dashboardView>
+          <h3>Dashboard: {{ getTotalPropertiesCount() }} {{ getTotalPropertiesCount() === 1 ? 'Property' : 'Properties' }}</h3>
+        </ng-template>
+        <div class="upload-box" *ngIf="selectedFolder !== 'Project' && folderNames.length > 0">
+          <div class="upload-options">
+            <input type="file" #fileInput style="display: none" (change)="onFileSelected($event)" multiple>
+            <button mat-raised-button color="primary" (click)="fileInput.click()">
+              <mat-icon>cloud_upload</mat-icon>
+              Upload Files
+            </button>
+          </div>
+          
+          <div *ngIf="uploadProgress > 0 && uploadProgress < 100" class="upload-progress">
+            <mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
+            <span class="progress-text">{{ uploadProgress | number:'1.0-0' }}%</span>
+          </div>
+        </div>
+
+        <mat-list class="list-items" *ngIf="folders[selectedFolder]?.length; else noFiles">
+          <ng-container *ngFor="let file of folders[selectedFolder]">
+            <ng-container *ngIf="!file.key.endsWith('/')">
+              <mat-list-item class="file-list-item">
+                <div class="file-content">
+                  <div class="file-info">
+                    <span>{{ getFileName(file.key) }}</span>
+                    <small *ngIf="file.size !== undefined" class="file-size">{{ file.size | filesize }}</small>
+                  </div>
+
+                  <div class="file-actions">
+                    <button mat-icon-button matTooltip="View" matTooltipPosition="below" (click)="getResults(file.url)">
+                      <mat-icon>visibility</mat-icon>
+                    </button>
+                    <a [href]="file.url" download>
+                      <button mat-icon-button matTooltip="Download" matTooltipPosition="below">
+                        <mat-icon>cloud_download</mat-icon>
+                      </button>
+                    </a>
+                    <button mat-icon-button matTooltip="Delete" matTooltipPosition="below" (click)="deleteFile(file.key)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </mat-list-item>
+            </ng-container>
+          </ng-container>
+        </mat-list>
+
+        <ng-template #noFiles>
+          <div class="empty-state" *ngIf="selectedFolder !== 'Project'">
+            <mat-icon>folder_open</mat-icon>
+            <p>No files available in this folder.</p>
+          </div>
+        </ng-template>
+      </div>
+    </ng-container>
+
+    <ng-template #noFolderSelected>
+      <div class="no-folder-selected">
+        <mat-icon>folder_open</mat-icon>
+        <h3>Select a project or create a new one to get started</h3>
+      </div>
+    </ng-template>
+  </main>
+</div>
+
+<div class="dual-view-container" #dataPanel>
+  <!-- Left: PDF Viewer -->
+  <div class="viewer-panel">
+    <h3>Document: {{ selectedFile }}</h3>
+
+    <div class="actions">
+       <a [href]="currentPdf" target="_blank" rel="noopener">
+          
+      <button mat-stroked-button color="primary">
+        <mat-icon>open_in_new</mat-icon> Open
+      </button>
+       
+          </a>
+      <button mat-stroked-button color="primary" (click)="downloadDocument()">
+        <mat-icon>cloud_download</mat-icon> Download
+      </button>
+    </div>
+
+    <div class="pdf-frame">
+      <ng-container *ngIf="loading; else showPdf">
+        <div class="loader">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      </ng-container>
+
+      <ng-template #showPdf>
+        <iframe *ngIf="currentPdf"
+                [src]="currentPdf"
+                width="100%" height="100%"
+                style="border: none;">
+        </iframe>
+        <p *ngIf="!currentPdf" class="empty-message">Select and process a document to view it</p>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- 🧾 Right: Extracted Data Form -->
+ <div class="data-panel">
+  <ng-container *ngIf="dataLoading; else showForm">
+    <div class="loader-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p class="loading-text">Extracting data from document...</p>
+    </div>
+  </ng-container>
+
+  <ng-template #showForm>
+    <ng-container *ngIf="extractedData">
+      <h3>Extracted Data</h3>
+      <mat-divider></mat-divider>
+
+      <form>
+        <ng-container *ngFor="let key of extractedKeys()">
+          <mat-form-field appearance="fill" class="field">
+            <mat-label>{{ formatLabel(key) }}</mat-label>
+            <textarea matInput [(ngModel)]="formData[key]" rows="2" name="{{key}}"></textarea>
+          </mat-form-field>
+        </ng-container>
+
+        <div class="actions">
+          <button mat-stroked-button color="primary" (click)="formData = {}">
+            Reset Changes
+          </button>
+          <button mat-raised-button color="primary" (click)="handleSubmit(originalFileUrl)">
+            Save Changes
+          </button>
+          
+        </div>
+      </form>
+    </ng-container>
+  </ng-template>
+</div>

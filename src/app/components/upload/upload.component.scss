@@ -1,0 +1,224 @@
+.upload-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+  
+  .logo {
+    h1 {
+      // font-size: 4rem;
+      // font-weight: 700;
+      // margin: 0;
+      // background: linear-gradient(45deg, #fff, #f0f0f0);
+      // -webkit-background-clip: text;
+      // -webkit-text-fill-color: transparent;
+      // background-clip: text;
+      // text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+
+
+      font-size: 3rem;
+      font-weight: 2000;
+      margin: 0;
+      background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+      // text-shadow: 3px 3px 6px rgba(0, 200, 83, 0.35);
+      letter-spacing: 1px;
+      transition: all 0.3s ease-in-out;
+
+  //     font-size: clamp(2.5rem, 5vw, 4rem); /* Responsive size */
+  // font-weight: 900;
+  // font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  // margin: 0;
+  // background: linear-gradient(90deg, #00c6ff, #0072ff);
+  // -webkit-background-clip: text;
+  // -webkit-text-fill-color: transparent;
+  // background-clip: text;
+  // color: transparent;
+  // text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+  // letter-spacing: 1.5px;
+  // transition: transform 0.3s ease;
+  // user-select: none;
+  // cursor: default;
+
+
+    }
+    
+    p {
+      font-size: 1.5rem;
+      color: rgba(255, 255, 255, 0.9);
+      margin: 10px 0 0 0;
+      font-weight: 300;
+    }
+  }
+}
+
+.upload-section {
+  width: 100%;
+  max-width: 600px;
+}
+
+.upload-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  
+  mat-card-header {
+    margin-bottom: 20px;
+    
+    mat-card-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    mat-card-subtitle {
+      color: #666;
+      margin-top: 8px;
+    }
+  }
+}
+
+.drop-zone {
+  border: 2px dashed #ccc;
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  
+  &:hover, &.drag-over {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
+  }
+  
+  .upload-icon {
+    font-size: 48px;
+    height: 48px;
+    width: 48px;
+    color: #667eea;
+    margin-bottom: 16px;
+  }
+  
+  .drop-text {
+    color: #666;
+    font-size: 1.1rem;
+    margin: 0;
+  }
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 8px;
+  margin-top: 16px;
+  
+  mat-icon {
+    margin-right: 12px;
+    color: #667eea;
+  }
+  
+  .file-details {
+    display: flex;
+    flex-direction: column;
+    
+    .file-name {
+      font-weight: 500;
+      color: #333;
+    }
+    
+    .file-size {
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 4px;
+    }
+  }
+}
+
+.progress-section {
+  margin-top: 16px;
+  
+  .progress-text {
+    text-align: center;
+    margin-top: 8px;
+    color: #667eea;
+    font-weight: 500;
+  }
+}
+
+.success-message {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 8px;
+  margin-top: 16px;
+  color: #4caf50;
+  
+  mat-icon {
+    margin-right: 12px;
+  }
+}
+
+mat-card-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  padding: 20px;
+  
+  button {
+    min-width: 160px;
+    height: 48px;
+    font-weight: 500;
+    border-radius: 24px;
+    
+    &.upload-btn {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+    }
+    
+    &.process-btn {
+      background: linear-gradient(45deg, #f093fb, #f5576c);
+      color: white;
+    }
+    
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .upload-container {
+    padding: 10px;
+  }
+  
+  .header .logo h1 {
+    font-size: 3rem;
+  }
+  
+  .drop-zone {
+    padding: 20px;
+  }
+  
+  mat-card-actions {
+    flex-direction: column;
+    
+    button {
+      width: 100%;
+    }
+  }
+}
