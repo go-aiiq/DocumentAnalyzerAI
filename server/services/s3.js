@@ -291,6 +291,95 @@ console.log(`message: Unsuccessful Upload`, err );
   delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
+
+  async deleteFolder(userId, folderName) {
+    const folderPath = `${userId}/${folderName}/`;
+    let totalDeleted = 0;
+    let isTruncated = true;
+    let continuationToken = null;
+    
+    if (this.mockMode) {
+      await this.delay(500);
+      console.log(`Mock S3 folder delete: ${folderPath}`);
+      return { 
+        deleted: true, 
+        message: `Folder '${folderPath}' deleted successfully`,
+        filesDeleted: 10 // Mock value
+      };
+    }
+
+    try {
+      console.log(`Starting deletion of folder: ${folderPath}`);
+      
+      // Keep deleting in batches until all objects are processed
+      while (isTruncated) {
+        // List objects in the folder with pagination
+        const listParams = {
+          Bucket: this.bucketName,
+          Prefix: folderPath,
+          ContinuationToken: continuationToken
+        };
+        
+        console.log(`Listing objects with params:`, JSON.stringify(listParams, null, 2));
+        const listedObjects = await this.s3.listObjectsV2(listParams).promise();
+        
+        if (!listedObjects.Contents || listedObjects.Contents.length === 0) {
+          if (totalDeleted === 0) {
+            console.log(`No objects found in folder: ${folderPath}`);
+            return { 
+              deleted: false, 
+              message: 'Folder is empty or does not exist',
+              filesDeleted: 0
+            };
+          }
+          break;
+        }
+
+        // Prepare delete parameters for this batch
+        const deleteParams = {
+          Bucket: this.bucketName,
+          Delete: { 
+            Objects: listedObjects.Contents.map(({ Key }) => ({ Key })),
+            Quiet: false
+          }
+        };
+
+        console.log(`Deleting batch of ${listedObjects.Contents.length} objects`);
+        const deleteResult = await this.s3.deleteObjects(deleteParams).promise();
+        
+        if (deleteResult.Errors && deleteResult.Errors.length > 0) {
+          console.error('Errors during deletion:', deleteResult.Errors);
+          throw new Error(`Failed to delete some objects: ${JSON.stringify(deleteResult.Errors)}`);
+        }
+        
+        totalDeleted += listedObjects.Contents.length;
+        console.log(`Successfully deleted ${listedObjects.Contents.length} objects (total: ${totalDeleted})`);
+        
+        // Check if there are more objects to delete
+        isTruncated = listedObjects.IsTruncated || false;
+        continuationToken = listedObjects.NextContinuationToken;
+      }
+
+      if (totalDeleted === 0) {
+        console.log(`No objects found in folder: ${folderPath}`);
+        return { 
+          deleted: false, 
+          message: 'Folder is empty or does not exist',
+          filesDeleted: 0
+        };
+      }
+
+      console.log(`Successfully deleted folder: ${folderPath}. Total files deleted: ${totalDeleted}`);
+      return { 
+        deleted: true, 
+        message: `Folder '${folderPath}' and its contents (${totalDeleted} files) deleted successfully`,
+        filesDeleted: totalDeleted
+      };
+    } catch (error) {
+      console.error(`Error deleting folder ${folderPath}:`, error);
+      throw new Error(`Failed to delete folder: ${error.message}`);
+    }
+  }
 }
 
 module.exports = new S3Service();

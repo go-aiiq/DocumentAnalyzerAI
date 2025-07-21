@@ -32,6 +32,49 @@ router.post('/input',async(req,res)=>{
   res.json({ success: true, val });
 });
 
+// Delete folder endpoint
+router.delete('/deleteFolder', async (req, res) => {
+  try {
+    const { folderName } = req.body;
+    const userId = req.cookies.user_Id;
+    
+    if (!folderName) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Folder name is required' 
+      });
+    }
+    
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        error: 'User not authenticated' 
+      });
+    }
+    
+    console.log(`Deleting folder: ${folderName} for user: ${userId}`);
+    const result = await s3Service.deleteFolder(userId, folderName);
+    
+    if (result.deleted) {
+      res.json({ 
+        success: true, 
+        message: result.message 
+      });
+    } else {
+      res.status(404).json({ 
+        success: false, 
+        error: result.message || 'Failed to delete folder' 
+      });
+    }
+  } catch (error) {
+    console.error('Error deleting folder:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to delete folder',
+      details: error.message 
+    });
+  }
+});
 
 //get extractedData from s3
 router.post('/getExtractedData',async(req,res)=>{

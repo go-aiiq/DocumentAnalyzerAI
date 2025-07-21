@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Observable, throwError, BehaviorSubject } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { 
   UploadResponse, 
   ProcessingResult, 
@@ -96,12 +97,30 @@ getFiles(): Observable<any> {
 }
 
 deleteFolder(folderName: string): Observable<any> {
-  return this.http.delete(`${this.baseUrl}/deleteFolder`, {
-    params: { folderName },
-    withCredentials: true,
-    responseType: 'json'
-  });
-}
+    return this.http.request('delete', `${this.baseUrl}/deleteFolder`, {
+      body: { folderName },
+      withCredentials: true,
+      responseType: 'json',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).pipe(
+      catchError(error => {
+        console.error('Error deleting folder:', error);
+        let errorMessage = 'An error occurred while deleting the folder';
+        
+        if (error.error && error.error.error) {
+          errorMessage = error.error.error;
+        } else if (error.status === 401) {
+          errorMessage = 'You are not authorized to delete this folder';
+        } else if (error.status === 404) {
+          errorMessage = 'Folder not found or already deleted';
+        }
+        
+        return throwError(() => new Error(errorMessage));
+      })
+    );
+  }
 
   upload(formData: FormData): Observable<any> {
     const uploadUrl = `${this.baseUrl}/upload`;
