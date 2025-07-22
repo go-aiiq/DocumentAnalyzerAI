@@ -14,6 +14,11 @@ const documentRoutes = require('./routes/document');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
+const BASE_URL = process.env.API_BASE_URL;
+const redirectBase = process.env.REDIRECT_BASE_URL||'http://localhost:5000';
+const cognitoURL = process.env.COGNITO_URL;
+
+
 
 // Enhanced CORS configuration for Replit environment
 // app.use(cors({
@@ -107,12 +112,23 @@ app.use((err, req, res, next) => {
   });
 });
 
+
+app.get('/.well-known/pki-validation/:79ED671DF7306B75CF56DCB390005692.txt', (req, res) => {
+  const filePath = path.join(__dirname, 'public','ta-ai-document-analyzer', '.well-known', 'pki-validation','79ED671DF7306B75CF56DCB390005692.txt' );
+  if (fs.existsSync(filePath)) {
+    res.sendFile(filePath);
+  } else {
+    res.status(404).send('File not found');
+  }
+});
+
 //Login Page
 app.get('/auth/login',(req,res)=>{
+  
   const loginUrl = `https://eu-north-1gux3lmqta.auth.eu-north-1.amazoncognito.com/login`+
   `?response_type=code`+
   `&client_id=28ai661e3t55hiomcj0818dmqa`+
-  `&redirect_uri=http://localhost:8000/auth/callback`+
+  `&redirect_uri=${cognitoURL}/auth/callback`+
   `&scope=openid+email+profile`;
 
   res.redirect(loginUrl);
@@ -134,7 +150,7 @@ try{
     querystring.stringify({
       grant_type: 'authorization_code',
       client_id: '28ai661e3t55hiomcj0818dmqa',
-      redirect_uri: 'http://localhost:8000/auth/callback',
+      redirect_uri: `${cognitoURL}/auth/callback`,
       code,
     }),
     {
@@ -151,7 +167,7 @@ try{
   console.log('userId: '+user_Id);
   // console.log('Set-Cookie-Header: ',res.getHeader('Set-Cookie'));
   // res.json({message:'Login Successful',user});
-  res.redirect('http://localhost:5000/userproject');
+  res.redirect(`${redirectBase}/userproject`);
 }
 catch(err){
 console.error('Token exchange failed:', err.response?.data || err.message);
@@ -164,7 +180,7 @@ app.get('/logout',async (req,res)=>{
 
   const clientId = '28ai661e3t55hiomcj0818dmqa';
   const domain = 'https://eu-north-1gux3lmqta.auth.eu-north-1.amazoncognito.com'; 
-  const logoutUri = encodeURIComponent('http://localhost:8000/auth/login'); //  redirect after logout
+  const logoutUri = encodeURIComponent(`${BASE_URL}/auth/login`); //  redirect after logout
 
   const logoutUrl = `${domain}/logout?client_id=${clientId}&logout_uri=${logoutUri}`;
   res.redirect(logoutUrl);
@@ -173,6 +189,21 @@ app.get('/logout',async (req,res)=>{
   
 
 })
+
+if(BASE_URL.includes('elasticbeanstalk.com')){
+app.use(express.static(path.join(__dirname, 'public/ta-ai-document-analyzer')));
+
+// Serve index.html for all unmatched routes (for Angular routing)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/ta-ai-document-analyzer/index.html'));
+});
+}
+else{
+  app.get('/', (req, res) => {
+  const frontendUrl = `https://${req.get('host').replace(':80', ':5000')}`;
+  res.redirect(frontendUrl);
+});
+}
 
 // app.use('/process',(req,res)){
 
@@ -185,10 +216,12 @@ app.use((req, res, next) => {
 });
 
 // Redirect root to frontend application
-app.get('/', (req, res) => {
-  const frontendUrl = `https://${req.get('host').replace(':80', ':5000')}`;
-  res.redirect(frontendUrl);
-});
+// app.get('/', (req, res) => {
+//   const frontendUrl = `https://${req.get('host').replace(':80', ':5000')}`;
+//   res.redirect(frontendUrl);
+// });
+
+
 
 
 // 404 handler

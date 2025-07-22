@@ -51,10 +51,16 @@ export class DocumentService {
         return 'http://localhost:8000/api';
         // return 
       }
+
+      //for beanstalk 
+      if (hostname.includes('elasticbeanstalk') ){
+        return 'https://documentanalyzer.eu-north-1.elasticbeanstalk.com/api';
+        // return 
+      }
     }
     
     // Default fallback
-    return 'http://localhost:8000/api';
+    return 'https://documentanalyzer.eu-north-1.elasticbeanstalk.com/api';
   }
 
    projectNameInput(value: string | null | undefined): Observable<any>{
