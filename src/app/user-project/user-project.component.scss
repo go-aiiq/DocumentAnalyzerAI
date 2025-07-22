@@ -146,7 +146,8 @@
     height: 44px;
     display: flex;
     align-items: center;
-    padding: 0 12px;
+    padding: 0 16px;
+    cursor: pointer;
     
     &::before {
       content: '';
@@ -162,11 +163,15 @@
     
     &.active {
       background-color: var(--sidebar-active);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       
       &::before {
         opacity: 1;
-        width: 4px;
+        width: 3px;
+      }
+      
+      .mat-icon {
+        color: white;
+        transform: scale(1.1);
       }
       
       .folder-name,
@@ -177,28 +182,48 @@
     }
     
     .mat-list-item-content {
-      display: block;
-      height: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       width: 100%;
-      padding: 0 16px;
+      height: 100%;
+      padding: 0 8px 0 0;
       
       .folder-content {
         display: flex;
-        flex-direction: column;
-      }
-      
-      .folder-header {
-        display: flex;
         align-items: center;
-        margin-bottom: 4px;
+        flex: 1;
+        padding-left: 16px;
+        
+        .folder-header {
+          display: flex;
+          align-items: center;
+          flex: 1;
+        }
       }
+    }
+    
+    .mat-icon {
+      color: var(--sidebar-icon);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      margin-right: 16px;
     }
     
     .folder-name {
       font-size: 0.9375rem;
       color: var(--sidebar-text);
       transition: all 0.2s ease;
-      font-weight: 500;
+      font-weight: 400;
+      line-height: 1.2;
+      display: flex;
+      align-items: center;
+      height: 100%;
     }
     
     .file-count {
@@ -209,18 +234,19 @@
       font-weight: 500;
       margin-left: 8px;
       flex-shrink: 0;
+      line-height: 1;
     }
     
     .delete-folder {
       opacity: 0;
       transition: all 0.2s ease;
       color: var(--sidebar-icon);
-      width: 100%;
+      width: 24px;
       height: 24px;
       line-height: 24px;
-      text-align: left;
+      text-align: center;
       padding: 0;
-      margin: 0;
+      margin: 0 8px 0 0;
       
       .mat-icon {
         font-size: 1rem;
@@ -240,11 +266,16 @@
       opacity: 1;
     }
     
-    &:hover:not(.dashboard-item) {
-      background: var(--sidebar-hover);
+    &:hover:not(.active) {
+      background-color: var(--sidebar-hover);
       
+      .mat-icon,
       .folder-name {
         color: white;
+      }
+      
+      .file-count {
+        background: rgba(255, 255, 255, 0.2);
       }
     }
   }
@@ -1046,7 +1077,6 @@ background-color: #6a6a6a;
   border-radius: 12px; /* Enhanced curve on hover */
   height:auto;
   cursor: pointer;
-
 }
 // ::ng-deep mat-list-item .active mat-list-item-content .active{
 //   background-color: #6a6a6a;
