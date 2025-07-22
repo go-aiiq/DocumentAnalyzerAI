@@ -107,8 +107,10 @@
             <mat-list-item class="file-list-item">
               <div class="file-content">
                 <div class="file-info">
-                  <span>{{ getFileName(file.key) }}</span>
-                  <small *ngIf="file.size !== undefined" class="file-size">{{ file.size | filesize }}</small>
+                  <div class="file-name">
+                    <span class="filename-text">{{ getFileName(file.key) }}</span>
+                    <small *ngIf="file.size !== undefined" class="file-size">{{ file.size | filesize }}</small>
+                  </div>
                 </div>
 
                 <div class="file-actions">
