@@ -28,9 +28,9 @@
         <div class="folder-content">
           <div class="folder-header">
             <span class="folder-name">{{ folder }}</span>
-            <span class="file-count" *ngIf="getFileCount(folder) > 0">
+            <!-- <span class="file-count" *ngIf="getFileCount(folder) > 0">
               {{ getFileCount(folder) }}
-            </span>
+            </span> -->
           </div>
           <button mat-icon-button 
                   class="delete-folder" 
@@ -63,22 +63,39 @@
         </ng-template>
         <div class="upload-box" *ngIf="selectedFolder !== 'Project' && folderNames.length > 0">
           <div class="upload-options">
-            <input type="file" #fileInput style="display: none" (change)="onFileSelected($event)" multiple>
-            <button mat-raised-button color="primary" (click)="fileInput.click()">
+            <input type="file" #fileInput style="display: none" (change)="onFileSelected($event)" accept=".pdf" multiple>
+            <button mat-raised-button color="primary" (click)="fileInput.click()" [disabled]="uploadProgress > 0 && uploadProgress < 100">
               <mat-icon>cloud_upload</mat-icon>
-              Upload Files
+              {{ uploadProgress > 0 ? 'Uploading...' : 'Upload File' }}
             </button>
-            <div class="file-info_upload" *ngIf="selectedFile">
-          <mat-icon>description</mat-icon>
-          <div class="file-details">
-            <span class="file-name">{{ selectedFile.name }}</span>
-            <span class="file-size">{{ getFileSize(selectedFile.size) }}</span>
-          </div>
-          <div *ngIf="uploadProgress > 0 && uploadProgress < 100" class="upload-progress">
-            <mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
-            <span class="progress-text">{{ uploadProgress | number:'1.0-0' }}%</span>
-          </div>
-        </div>
+            
+            <div class="file-info_upload" *ngIf="selectedFile" [class.uploading]="uploadProgress > 0">
+              <div class="file-header">
+                <mat-icon class="file-icon">description</mat-icon>
+                <div class="file-details">
+                  <span class="file-name" [title]="selectedFile.name">{{ selectedFile.name }}</span>
+                  <span class="file-size">{{ getFileSize(selectedFile.size) }}</span>
+                </div>
+              </div>
+              
+              <div class="upload-progress" *ngIf="uploadProgress > 0">
+                <div class="progress-bar-container">
+                  <mat-progress-bar 
+                    mode="determinate" 
+                    [value]="uploadProgress"
+                    color="primary">
+                  </mat-progress-bar>
+                  <span class="progress-text">{{ uploadProgress | number:'1.0-0' }}%</span>
+                </div>
+                <div class="upload-status">
+                  <span *ngIf="uploadProgress < 100">Uploading...</span>
+                  <span *ngIf="uploadProgress === 100" class="upload-success">
+                    <mat-icon>check_circle</mat-icon>
+                    Upload complete
+                  </span>
+                </div>
+              </div>
+            </div>
            
         </div>
           </div>
