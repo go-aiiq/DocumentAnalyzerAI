@@ -80,6 +80,7 @@ export class UserProjectComponent {
   formgrp: FormGroup = this.fb.group({});
   data: any = null;
   datares: any = null;
+  baseurl!:string;
 
   // Constants
   readonly Object = Object;
@@ -94,8 +95,22 @@ export class UserProjectComponent {
 
     // Load folders and files
     this.loadFolders();
+    const baseurl=this.getBaseUrl();
+    
   }
+  getBaseUrl(){
+    if((window.location.hostname)==='localhost'){
+    return 'http://localhost:8000/api';
+  }
+  if((window.location.hostname).includes('elasticbeanstalk')){
+    return 'https://documentanalyzer.eu-north-1.elasticbeanstalk.com/api';
+  }
+  return 'https://documentanalyzer.eu-north-1.elasticbeanstalk.com/api';
+  
 
+
+  }
+  
   /**
    * Loads folders and their files from the server
    */
@@ -469,7 +484,8 @@ export class UserProjectComponent {
       fileurl: fileUrl, // or any custom name
       data: this.formData
     };
-    this.http.post('http://localhost:8000/api/submit', payload).subscribe({
+    
+    this.http.post(`${this.getBaseUrl()}/submit`, payload).subscribe({
       next: res => {
         console.log('Response received:', res);
         // this.success = 'Form submitted!'; 
@@ -496,7 +512,7 @@ export class UserProjectComponent {
 
 
   getResults(filePath: any) {
-    this.http.post('http://localhost:8000/api/getResults', {
+    this.http.post(`${this.getBaseUrl()}/getResults`, {
       filename: filePath
     }).subscribe(res => {
       //  this.extractedData=res;

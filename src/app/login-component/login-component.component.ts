@@ -12,6 +12,16 @@ export class LoginComponentComponent {
 
   }
   ngOnInit():void{
-    window.location.href='http://localhost:8000/auth/login';
+      const currentPath = window.location.pathname;
+
+  if (currentPath !== '/auth/login') {
+    const isBeanstalk = window.location.hostname.includes('elasticbeanstalk');
+    const baseUrl = isBeanstalk
+      ? 'http://documentanalyzer.eu-north-1.elasticbeanstalk.com'
+      : 'http://localhost:8000';
+
+    window.location.href = `${baseUrl}/auth/login`;
+  }
+    
   }
 }
