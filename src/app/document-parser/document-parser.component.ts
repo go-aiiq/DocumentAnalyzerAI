@@ -92,48 +92,6 @@ export class DocumentParserComponent {
     this.viewerOpen = true;
   }
 
-  // handleProcessDocument(): void {
-  //   if (!this.selectedFile) return;
-
-  //   this.loading = true;
-  //   this.dataLoading = true;
-  //   this.error = '';
-  //   this.success = '';
-
-  //   this.handleViewDocument(this.selectedFile).then(() => {
-  //     this.http.post<any>('http://localhost:8000/api/process', {
-  //       filename: this.selectedFile
-  //     }).subscribe({
-  //       next: (res) => {
-  //         const extractedData = res.data || res;
-  //         if (!extractedData) {
-  //           throw new Error('No data extracted from document');
-  //         }
-
-  //         console.log('Extracted Data:', extractedData);
-  //         this.extractedData = extractedData;
-  //         this.formData = { ...extractedData };
-  //         this.success = 'Document processed successfully!';
-  //         this.dataLoading = false;
-  //       },
-  //       error: (err) => {
-  //         console.error('Error processing document:', err);
-  //         this.error = err.error?.detail || 'Failed to process document';
-  //         this.dataLoading = false;
-  //       },
-  //       complete: () => {
-  //         this.loading = false;
-  //       }
-  //     });
-  //   }).catch((err) => {
-  //     console.error('Error loading PDF:', err);
-  //     this.error = `Failed to view document: ${err.message}`;
-  //     this.loading = false;
-  //     this.dataLoading = false;
-  //   });
-
-  // }
-
   handleSubmit(): void {
     this.http.post('http://localhost:8000/api/submit', this.formData).subscribe({
       next: res => {

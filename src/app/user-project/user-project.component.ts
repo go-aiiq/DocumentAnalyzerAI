@@ -351,30 +351,6 @@ export class UserProjectComponent {
     }
   }
 
-  //   uploadFile(event: Event): void {
-  //   const input = event.target as HTMLInputElement;
-  //   if (!input.files?.length) return;
-
-  //   const file = input.files[0];
-  //   const formData = new FormData();
-  //   formData.append('file', file);
-  //   formData.append('folderName', this.selectedFolder);
-  //   console.log("formdata foldername: ",this.selectedFolder);
-  //   // formData.append('userId', this.userId); // grab from session or context
-  //   this.documentService.upload(formData).subscribe({
-  //     next: () => this.refreshFiles(),
-  //   error: err => console.error('Upload failed:', err)
-  //   });
-  //   // this.refreshFiles();
-  //   // this.http.post('/api/upload', formData).subscribe({
-  //   //   next: res => {
-  //   //     console.log('File uploaded:', res);
-  //   //     // Optionally refresh folder contents
-
-  //   //   },
-  //   //   error: err => console.error('Upload failed', err)
-  //   // });
-  // }
 
   uploadFile(): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -451,20 +427,8 @@ export class UserProjectComponent {
       this.error = '';
 
       const encodedFilename = encodeURIComponent(filename);
-      // console.log("selectdfile: ",this.selectedFile);
-      // const pdfUrl = `http://localhost:8000/api/view`;
       const pdfUrl = filename;
 
-
-      // Fetch using browser API (Fetch) or Angular HttpClient
-      // const response = await fetch(pdfUrl, {
-      //   method: 'GET',
-      //   // credentials:'include',
-      //   headers: {
-      //     'Cache-Control': 'no-cache',
-      //     'Pragma': 'no-cache'
-      //   }
-      // });
       const response = await fetch(pdfUrl, {
         method: 'GET',
         headers: {
@@ -473,22 +437,6 @@ export class UserProjectComponent {
         },
         // body: filename
       });
-      //       this.http.post('http://localhost:8000/api/view', { filename }, { responseType: 'blob' }).subscribe({
-      //   next: (blob: Blob) => {
-      //     const blobUrl = URL.createObjectURL(blob);
-      //     const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(blobUrl);
-      //     this.currentPdf = safeUrl;
-      //     this.viewerOpen = true;
-      //   },
-      //   error: async (error: HttpErrorResponse) => {
-      //     const errorText = await error.error.text();
-      //     console.error("Error fetching PDF:", errorText);
-      //   }
-      // });
-
-      // if (!response.ok) {
-      //   throw new Error(`Failed to load PDF: ${response.status} ${response.statusText}`);
-      // }
 
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
@@ -506,61 +454,7 @@ export class UserProjectComponent {
     }
   }
 
-
-  // handleProcessDocument(fileUrl: any): void {
-  //   // const file = this.selectedFile;
-  //   // this.selectedFilename=file.name;
-  //   this.originalFileUrl = fileUrl;
-  //   console.log("filename ", fileUrl);
-  //   this.selectedFilename = this.getFileName(fileUrl);
-  //   // this.selectedFilename = fileUrl;
-  //   if (!this.selectedFilename) return;
-
-  //   this.loading = true;
-  //   this.dataLoading = true;
-  //   this.error = '';
-  //   this.success = '';
-
-  //   this.handleViewDocument(fileUrl).then(() => {
-  //     this.http.post<any>('http://localhost:8000/api/process', {
-  //       filename: fileUrl
-  //     }).subscribe({
-  //       next: (res) => {
-  //         const extractedData = res.data || res;
-  //         if (!extractedData) {
-  //           throw new Error('No data extracted from document ');
-  //         }
-
-  //         console.log('Extracted Data:', extractedData);
-  //         this.extractedData = extractedData;
-  //         this.formData = { ...extractedData };
-  //         this.success = 'Document processed successfully!';
-  //         this.dataLoading = false;
-  //         console.log("fileUrl", fileUrl);
-  //         this.handleSubmit(fileUrl);
-  //       },
-  //       error: (err) => {
-  //         console.error('Error processing document:', err);
-  //         this.error = err.error?.detail || 'Failed to process document';
-  //         this.dataLoading = false;
-  //       },
-  //       complete: () => {
-  //         this.loading = false;
-  //       }
-  //     });
-  //   }).catch((err) => {
-  //     console.error('Error loading PDF:', err);
-  //     this.error = `Failed to view document: ${err.message}`;
-  //     this.loading = false;
-  //     this.dataLoading = false;
-  //   });
-
-  // }
-
   extractedKeys(): string[] {
-    // console.log(this.extractedData);
-
-
     return Object.keys(this.extractedData || {}).filter(k => k !== 'status' && typeof this.extractedData[k] !== 'object');
   }
 

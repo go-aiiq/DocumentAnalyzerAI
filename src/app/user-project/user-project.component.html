@@ -144,8 +144,8 @@
 <div class="dual-view-container" #dataPanel>
   <!-- Left: PDF Viewer -->
   <div class="viewer-panel">
-    <h3>Document: {{ selectedFile }}</h3>
-
+    <!-- <h3>Document: {{ selectedFile }}</h3> -->
+<!-- 
     <div class="actions">
        <a [href]="currentPdf" target="_blank" rel="noopener">
           
@@ -157,7 +157,7 @@
       <button mat-stroked-button color="primary" (click)="downloadDocument()">
         <mat-icon>cloud_download</mat-icon> Download
       </button>
-    </div>
+    </div> -->
 
     <div class="pdf-frame">
       <ng-container *ngIf="loading; else showPdf">
@@ -188,7 +188,7 @@
 
   <ng-template #showForm>
     <ng-container *ngIf="extractedData">
-      <h3>Extracted Data1</h3>
+      <h3>Extracted Data</h3>
       <mat-divider></mat-divider>
 
       <form>
