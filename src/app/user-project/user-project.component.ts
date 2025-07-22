@@ -55,6 +55,7 @@ export class UserProjectComponent {
   
   // State
   folders: { [folder: string]: any[] } = {};
+  processedFolders: { [folder: string]: any[] } = {};
   folderNames: string[] = [];
   selectedFolder: string = 'Property';
   selectedFile: File | null = null;
@@ -104,20 +105,8 @@ export class UserProjectComponent {
         this.loading = false;
         if (res && res.response) {
           this.folders = res.response;
-          const filteredFolders: { [folderName: string]: any[] } = {};
-          
-          // Filter folders to only include those with PDF files
-          Object.keys(this.folders).forEach(folderName => {
-            const pdfFiles = this.folders[folderName].filter(file =>
-              typeof file.key === 'string' && (file.key.toLowerCase().endsWith('.pdf') || file.key.endsWith('/'))
-            );
-            if (pdfFiles.length > 0) {
-              filteredFolders[folderName] = pdfFiles;
-            }
-          });
-          
-          this.folders = filteredFolders;
           this.folderNames = Object.keys(this.folders);
+          this.processFiles();
         } else {
           console.warn('No folders available');
           this.folders = {};
@@ -134,6 +123,32 @@ export class UserProjectComponent {
     });
   }
 
+  private processFiles(): void {
+    this.processedFolders = {};
+    for (const folderName of this.folderNames) {
+      const allFiles = this.folders[folderName] || [];
+      const pdfFiles = allFiles.filter(f => f.key.toLowerCase().endsWith('.pdf'));
+
+      this.processedFolders[folderName] = pdfFiles.map(pdfFile => {
+        const baseKeyWithPdf = pdfFile.key;
+        const lastSlashIndex = baseKeyWithPdf.lastIndexOf("/");
+        const pathBeforeFile = baseKeyWithPdf.substring(0, lastSlashIndex);
+        let fileName = baseKeyWithPdf.substring(lastSlashIndex + 1);
+        fileName = fileName.replace(/\.pdf$/i, "");
+        const extractedDataPath = `${pathBeforeFile}/extractedData/${fileName}`;
+        console.log(extractedDataPath)
+
+        return {
+          ...pdfFile,
+          hasJson: allFiles.some(f => f.key === extractedDataPath + '.json'),
+          isProcessing: allFiles.some(f => f.key === extractedDataPath + '.processing'),
+          hasError: allFiles.some(f => f.key === extractedDataPath + '.error'),
+        };
+      });
+    }
+    console.log(this.processedFolders)
+  }
+
   containsFiles(): boolean {
     const files = this.folders[this.selectedFolder];
     return Array.isArray(files) && files.some(file => !file.key.endsWith('/'));
@@ -141,8 +156,7 @@ export class UserProjectComponent {
 
   getFileName(key: string): string {
      return key.split('/').pop() || key;
-}
-
+  }
 
   selectFolder(folder: string): void {
     // Only update the selected folder without refreshing files
@@ -251,6 +265,7 @@ refreshFiles(): void {
       if (!this.folderNames.includes(this.selectedFolder)) {
         this.selectedFolder = this.folderNames[0] || '';
       }
+      this.processFiles();
       this.cdr.detectChanges();
     }
   });

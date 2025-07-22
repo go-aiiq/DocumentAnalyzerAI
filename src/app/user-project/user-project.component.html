@@ -85,33 +85,41 @@
           
           
 
-        <mat-list class="list-items" *ngIf="folders[selectedFolder]?.length; else noFiles">
-          <ng-container *ngFor="let file of folders[selectedFolder]">
-            <ng-container *ngIf="!file.key.endsWith('/')">
-              <mat-list-item class="file-list-item">
-                <div class="file-content">
-                  <div class="file-info">
-                    <span>{{ getFileName(file.key) }}</span>
-                    <small *ngIf="file.size !== undefined" class="file-size">{{ file.size | filesize }}</small>
-                  </div>
+        <mat-list class="list-items" *ngIf="processedFolders[selectedFolder]?.length; else noFiles">
+          <ng-container *ngFor="let file of processedFolders[selectedFolder]">
+            <mat-list-item class="file-list-item">
+              <div class="file-content">
+                <div class="file-info">
+                  <span>{{ getFileName(file.key) }}</span>
+                  <small *ngIf="file.size !== undefined" class="file-size">{{ file.size | filesize }}</small>
+                </div>
 
-                  <div class="file-actions">
-                    <!-- <button mat-icon-button matTooltip="View" matTooltipPosition="below" (click)="handleViewDocument(file.url)"> -->
-                      <button mat-icon-button matTooltip="View" matTooltipPosition="below" (click)="getResults(file.url)">
+                <div class="file-actions">
+                  <ng-container *ngIf="file.isProcessing">
+                    <mat-spinner diameter="20" matTooltip="Processing..."></mat-spinner>
+                  </ng-container>
+
+                  <ng-container *ngIf="file.hasError && !file.isProcessing">
+                    <mat-icon color="warn" matTooltip="Error processing file">error</mat-icon>
+                  </ng-container>
+
+                  <ng-container *ngIf="file.hasJson && !file.isProcessing">
+                    <button mat-icon-button matTooltip="View" matTooltipPosition="below" (click)="getResults(file.url)">
                       <mat-icon>visibility</mat-icon>
                     </button>
-                    <a [href]="file.url" download>
-                      <button mat-icon-button matTooltip="Download" matTooltipPosition="below">
-                        <mat-icon>cloud_download</mat-icon>
-                      </button>
-                    </a>
-                    <button mat-icon-button matTooltip="Delete" matTooltipPosition="below" (click)="deleteFile(file.key)">
-                      <mat-icon>delete</mat-icon>
+                  </ng-container>
+
+                  <a [href]="file.url" download>
+                    <button mat-icon-button matTooltip="Download" matTooltipPosition="below">
+                      <mat-icon>cloud_download</mat-icon>
                     </button>
-                  </div>
+                  </a>
+                  <button mat-icon-button matTooltip="Delete" matTooltipPosition="below" (click)="deleteFile(file.key)" *ngIf="!file.isProcessing">
+                    <mat-icon>delete</mat-icon>
+                  </button>
                 </div>
-              </mat-list-item>
-            </ng-container>
+              </div>
+            </mat-list-item>
           </ng-container>
         </mat-list>
 
