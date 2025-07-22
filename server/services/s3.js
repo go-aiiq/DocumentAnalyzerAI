@@ -273,7 +273,7 @@ class S3Service {
           console.log("Bucket Exists");
           const response = await this.s3.getObject(param).promise();
           const fileContent = response.Body.toString('utf-8');
-          console.log("Response: ",response.fileContent);
+          console.log("Response: ", fileContent);
           return fileContent;
         }
         else{

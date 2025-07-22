@@ -17,11 +17,11 @@
     </mat-list-option>
   </mat-selection-list> -->
 
-  <button mat-raised-button color="primary" (click)="handleProcessDocument()">
+  <!-- <button mat-raised-button color="primary" (click)="handleProcessDocument()">
   <!-- [disabled]="!selectedFile || loading"> -->
-    <mat-progress-spinner *ngIf="loading" diameter="20"></mat-progress-spinner>
+    <!-- <mat-progress-spinner *ngIf="loading" diameter="20"></mat-progress-spinner>
     <span *ngIf="!loading">Process Document</span>
-  </button>
+  </button> --> -->
 
   <div *ngIf="viewerOpen || extractedData" class="view-section">
     <iframe *ngIf="currentPdf" [src]="currentPdf" width="100%" height="400"></iframe>

@@ -96,7 +96,7 @@
 
                 <div class="file-actions">
                   <ng-container *ngIf="file.isProcessing">
-                    <mat-spinner diameter="20" matTooltip="Processing..."></mat-spinner>
+                    <mat-progress-spinner diameter="20" matTooltip="Processing..."></mat-progress-spinner>
                   </ng-container>
 
                   <ng-container *ngIf="file.hasError && !file.isProcessing">
@@ -188,7 +188,7 @@
 
   <ng-template #showForm>
     <ng-container *ngIf="extractedData">
-      <h3>Extracted Data</h3>
+      <h3>Extracted Data1</h3>
       <mat-divider></mat-divider>
 
       <form>

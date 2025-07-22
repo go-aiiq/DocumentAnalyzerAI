@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, ElementRef, Pipe, ViewChild } from '@angular/core';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { DomSanitizer,SafeResourceUrl  } from '@angular/platform-browser';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { MatInputModule } from "@angular/material/input";
 import { FormsModule } from '@angular/forms';
@@ -11,7 +11,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-document-parser',
-  imports: [MatListModule, MatProgressBarModule, MatProgressSpinnerModule, MatInputModule,FormsModule,CommonModule],
+  imports: [MatListModule, MatProgressBarModule, MatProgressSpinnerModule, MatInputModule, FormsModule, CommonModule],
   templateUrl: './document-parser.component.html',
   styleUrl: './document-parser.component.scss'
 })
@@ -27,13 +27,13 @@ export class DocumentParserComponent {
   loading = false;
   dataLoading = false;
   viewerOpen = false;
-  currentPdf : SafeResourceUrl| null = null;
+  currentPdf: SafeResourceUrl | null = null;
 
 
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
-  constructor(private http: HttpClient,private sanitizer: DomSanitizer,private snackBar:MatSnackBar) {}
+  constructor(private http: HttpClient, private sanitizer: DomSanitizer, private snackBar: MatSnackBar) { }
 
   ngOnInit(): void {
     this.fetchFiles();
@@ -92,54 +92,56 @@ export class DocumentParserComponent {
     this.viewerOpen = true;
   }
 
-  handleProcessDocument(): void {
-    if (!this.selectedFile) return;
+  // handleProcessDocument(): void {
+  //   if (!this.selectedFile) return;
 
-    this.loading = true;
-    this.dataLoading = true;
-this.error = '';
-  this.success = '';
+  //   this.loading = true;
+  //   this.dataLoading = true;
+  //   this.error = '';
+  //   this.success = '';
 
-  this.handleViewDocument(this.selectedFile).then(() => {
-    this.http.post<any>('http://localhost:8000/api/process', {
-      filename: this.selectedFile
-    }).subscribe({
-      next: (res) => {
-        const extractedData = res.data || res;
-        if (!extractedData) {
-          throw new Error('No data extracted from document');
-        }
+  //   this.handleViewDocument(this.selectedFile).then(() => {
+  //     this.http.post<any>('http://localhost:8000/api/process', {
+  //       filename: this.selectedFile
+  //     }).subscribe({
+  //       next: (res) => {
+  //         const extractedData = res.data || res;
+  //         if (!extractedData) {
+  //           throw new Error('No data extracted from document');
+  //         }
 
-        console.log('Extracted Data:', extractedData);
-        this.extractedData = extractedData;
-        this.formData = { ...extractedData };
-        this.success = 'Document processed successfully!';
-        this.dataLoading = false;
-      },
-      error: (err) => {
-        console.error('Error processing document:', err);
-        this.error = err.error?.detail || 'Failed to process document';
-        this.dataLoading = false;
-      },
-      complete: () => {
-        this.loading = false;
-      }
-    });
-  }).catch((err) => {
-    console.error('Error loading PDF:', err);
-    this.error = `Failed to view document: ${err.message}`;
-    this.loading = false;
-    this.dataLoading = false;
-  });
+  //         console.log('Extracted Data:', extractedData);
+  //         this.extractedData = extractedData;
+  //         this.formData = { ...extractedData };
+  //         this.success = 'Document processed successfully!';
+  //         this.dataLoading = false;
+  //       },
+  //       error: (err) => {
+  //         console.error('Error processing document:', err);
+  //         this.error = err.error?.detail || 'Failed to process document';
+  //         this.dataLoading = false;
+  //       },
+  //       complete: () => {
+  //         this.loading = false;
+  //       }
+  //     });
+  //   }).catch((err) => {
+  //     console.error('Error loading PDF:', err);
+  //     this.error = `Failed to view document: ${err.message}`;
+  //     this.loading = false;
+  //     this.dataLoading = false;
+  //   });
 
-  }
+  // }
 
   handleSubmit(): void {
     this.http.post('http://localhost:8000/api/submit', this.formData).subscribe({
-      next: res => {this.success = 'Form submitted!',this.snackBar.open('Changes saved successfully!', 'Close', {
-        duration: 3000,
-        verticalPosition: 'top'
-      })},
+      next: res => {
+        this.success = 'Form submitted!', this.snackBar.open('Changes saved successfully!', 'Close', {
+          duration: 3000,
+          verticalPosition: 'top'
+        })
+      },
       error: err => this.error = 'Submission failed'
     });
   }

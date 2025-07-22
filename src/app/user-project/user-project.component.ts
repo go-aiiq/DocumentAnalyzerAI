@@ -52,7 +52,7 @@ import { FileSizePipe } from '../pipes/file-size.pipe';
 export class UserProjectComponent {
   @ViewChild('dataPanel') dataPanel!: ElementRef;
   @ViewChild('fileInput') fileInput!: ElementRef;
-  
+
   // State
   folders: { [folder: string]: any[] } = {};
   processedFolders: { [folder: string]: any[] } = {};
@@ -60,17 +60,18 @@ export class UserProjectComponent {
   selectedFolder: string = 'Property';
   selectedFile: File | null = null;
   selectedFilename: string = '';
-  
+
   // UI State
   loading: boolean = false;
   dataLoading: boolean = false;
   viewerOpen: boolean = false;
   showFormView: boolean = false;
   uploadProgress: number = 0; // Tracks file upload progress (0-100)
-  
+
   // Data
   formData: Record<string, any> = {};
   extractedData: any = null;
+  extractedDataFulldata: any = null;
   error: string = '';
   success: string = '';
   pdfUrl: string = '';
@@ -79,18 +80,18 @@ export class UserProjectComponent {
   formgrp: FormGroup = this.fb.group({});
   data: any = null;
   datares: any = null;
-  
+
   // Constants
   readonly Object = Object;
 
-  constructor(private fb:FormBuilder,private http:HttpClient,private documentService: DocumentService,private dialog:MatDialog,private router: Router,private cdr: ChangeDetectorRef, private snackBar:MatSnackBar,private sanitizer: DomSanitizer){
+  constructor(private fb: FormBuilder, private http: HttpClient, private documentService: DocumentService, private dialog: MatDialog, private router: Router, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar, private sanitizer: DomSanitizer) {
 
   }
 
   ngOnInit(): void {
     // Set default view to dashboard
     this.selectedFolder = 'Project';
-    
+
     // Load folders and files
     this.loadFolders();
   }
@@ -155,7 +156,7 @@ export class UserProjectComponent {
   }
 
   getFileName(key: string): string {
-     return key.split('/').pop() || key;
+    return key.split('/').pop() || key;
   }
 
   selectFolder(folder: string): void {
@@ -163,7 +164,7 @@ export class UserProjectComponent {
     this.selectedFolder = folder;
     this.selectedFile = null;
     this.selectedFilename = '';
-    
+
     // Only refresh files if not selecting the dashboard
     if (folder !== 'Project') {
       this.refreshFiles();
@@ -193,14 +194,14 @@ export class UserProjectComponent {
       next: () => {
         this.loading = false;
         this.snackBar.open(`Property "${folderName}" deleted successfully`, 'Close', { duration: 3000 });
-        
+
         // If the deleted folder was selected, reset to dashboard
         if (this.selectedFolder === folderName) {
           this.selectedFolder = 'Project';
           this.selectedFile = null;
           this.selectedFilename = '';
         }
-        
+
         // Reload the folders to reflect the deletion
         this.loadFolders();
       },
@@ -217,12 +218,12 @@ export class UserProjectComponent {
     });
   }
 
-/**
- * Returns the total number of properties
- */
-getTotalPropertiesCount(): number {
-  return this.folderNames.length;
-}
+  /**
+   * Returns the total number of properties
+   */
+  getTotalPropertiesCount(): number {
+    return this.folderNames.length;
+  }
 
   /**
    * Counts the number of files in a given folder
@@ -237,44 +238,44 @@ getTotalPropertiesCount(): number {
     return this.folders[folderName].filter(file => !file.key.endsWith('/')).length;
   }
 
-    openCreateDialog(){
-      this.dialog.open(CreateProjectDialogComponent).afterClosed().subscribe(data=>{
-        if(data){
-          this.documentService.projectNameInput(data).subscribe(resp => {
-            console.log("Response: " , resp);
-            this.refreshFiles();
-            this.selectedFolder = data;
-          });
-          
-        }
+  openCreateDialog() {
+    this.dialog.open(CreateProjectDialogComponent).afterClosed().subscribe(data => {
+      if (data) {
+        this.documentService.projectNameInput(data).subscribe(resp => {
+          console.log("Response: ", resp);
+          this.refreshFiles();
+          this.selectedFolder = data;
+        });
+
       }
+    }
     );
-    }
-    openDocument(){
+  }
+  openDocument() {
 
-    }
-    downloadDocument(){
+  }
+  downloadDocument() {
 
-    }
-refreshFiles(): void {
-  this.documentService.getFiles().subscribe(res => {
-    if (res?.response) {
-      this.folders = res.response;
-      this.folderNames = Object.keys(this.folders);
-      // Preserve selected folder if still present
-      if (!this.folderNames.includes(this.selectedFolder)) {
-        this.selectedFolder = this.folderNames[0] || '';
+  }
+  refreshFiles(): void {
+    this.documentService.getFiles().subscribe(res => {
+      if (res?.response) {
+        this.folders = res.response;
+        this.folderNames = Object.keys(this.folders);
+        // Preserve selected folder if still present
+        if (!this.folderNames.includes(this.selectedFolder)) {
+          this.selectedFolder = this.folderNames[0] || '';
+        }
+        this.processFiles();
+        this.cdr.detectChanges();
       }
-      this.processFiles();
-      this.cdr.detectChanges();
-    }
-  });
-}
+    });
+  }
   async onFileSelected(event: Event): Promise<void> {
     const target = event.target as HTMLInputElement;
     if (target.files && target.files.length > 0) {
       this.selectedFile = target.files[0] || null;
-      this.selectedFilename=this.selectedFile.name;
+      this.selectedFilename = this.selectedFile.name;
       this.originalFileUrl = this.selectedFilename;
       this.loading = true;
       this.dataLoading = true;
@@ -283,15 +284,15 @@ refreshFiles(): void {
       try {
 
         const fileUrl = await this.uploadFile();
-        console.log("fileUrl",fileUrl);
+        console.log("fileUrl", fileUrl);
         if (fileUrl) {
-            // Backend will automatically process the document
-            //this.handleProcessDocument(fileUrl);
+          // Backend will automatically process the document
+          //this.handleProcessDocument(fileUrl);
         } else {
-            console.error("File URL is undefined or null.");
+          console.error("File URL is undefined or null.");
         }
         // this.handleProcessDocument(fileUrl);      
-        
+
       } catch (err: any) {
         console.error('Upload error:', err);
         this.error = err.message || 'File upload failed';
@@ -300,10 +301,10 @@ refreshFiles(): void {
       }
     }
 
-    }
-  
+  }
 
-validateFile(): void {
+
+  validateFile(): void {
     if (!this.selectedFile) return;
 
     // Check file type
@@ -321,7 +322,7 @@ validateFile(): void {
       return;
     }
   }
-    getFileSize(bytes: number): string {
+  getFileSize(bytes: number): string {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -350,98 +351,98 @@ validateFile(): void {
     }
   }
 
-//   uploadFile(event: Event): void {
-//   const input = event.target as HTMLInputElement;
-//   if (!input.files?.length) return;
+  //   uploadFile(event: Event): void {
+  //   const input = event.target as HTMLInputElement;
+  //   if (!input.files?.length) return;
 
-//   const file = input.files[0];
-//   const formData = new FormData();
-//   formData.append('file', file);
-//   formData.append('folderName', this.selectedFolder);
-//   console.log("formdata foldername: ",this.selectedFolder);
-//   // formData.append('userId', this.userId); // grab from session or context
-//   this.documentService.upload(formData).subscribe({
-//     next: () => this.refreshFiles(),
-//   error: err => console.error('Upload failed:', err)
-//   });
-//   // this.refreshFiles();
-//   // this.http.post('/api/upload', formData).subscribe({
-//   //   next: res => {
-//   //     console.log('File uploaded:', res);
-//   //     // Optionally refresh folder contents
+  //   const file = input.files[0];
+  //   const formData = new FormData();
+  //   formData.append('file', file);
+  //   formData.append('folderName', this.selectedFolder);
+  //   console.log("formdata foldername: ",this.selectedFolder);
+  //   // formData.append('userId', this.userId); // grab from session or context
+  //   this.documentService.upload(formData).subscribe({
+  //     next: () => this.refreshFiles(),
+  //   error: err => console.error('Upload failed:', err)
+  //   });
+  //   // this.refreshFiles();
+  //   // this.http.post('/api/upload', formData).subscribe({
+  //   //   next: res => {
+  //   //     console.log('File uploaded:', res);
+  //   //     // Optionally refresh folder contents
 
-//   //   },
-//   //   error: err => console.error('Upload failed', err)
-//   // });
-// }
+  //   //   },
+  //   //   error: err => console.error('Upload failed', err)
+  //   // });
+  // }
 
-uploadFile(): Promise<string>  {
-  return new Promise((resolve, reject) => {
-    if (!this.selectedFile) {
-    this.snackBar.open('No file selected', 'Close', { duration: 3000 });
-     reject('No file selected');
-    return;
-  }
-
-  // Validate file type (PDF only)
-  if (this.selectedFile.type !== 'application/pdf') {
-    this.snackBar.open('Only PDF files are allowed', 'Close', { duration: 3000 });
-    reject('Invalid file type');
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append('file', this.selectedFile);
-  formData.append('folderName', this.selectedFolder);
-
-  console.log('Uploading file to folder:', this.selectedFolder);
-  
-  // Show loading state
-  this.loading = true;
-  this.uploadProgress = 0;
-
-  this.documentService.upload(formData).subscribe({
-    next: (event: any) => {
-      // Handle upload progress
-      if (event.type === HttpEventType.UploadProgress) {
-        this.uploadProgress = Math.round(100 * event.loaded / (event.total || 1));
-      } else if (event.type === HttpEventType.Response) {
-        // Upload complete
-        this.snackBar.open('File uploaded successfully', 'Close', { duration: 3000 });
-        this.refreshFiles();
-        // this.selectedFile = null;
-        // this.selectedFilename = '';
-        // if (this.fileInput) {
-        //   this.fileInput.nativeElement.value = '';
-        // }
-        this.uploadProgress = 0;
-        
-        const fileUrl = event.body.fileUrl || event.body.url;
-          if (!fileUrl) {
-            reject('No file URL returned by server');
-          } else {
-            resolve(fileUrl);
-          }
-          this.selectedFile = null;
-          this.selectedFilename = '';
-          if (this.fileInput) {
-            this.fileInput.nativeElement.value = '';
-          }
+  uploadFile(): Promise<string> {
+    return new Promise((resolve, reject) => {
+      if (!this.selectedFile) {
+        this.snackBar.open('No file selected', 'Close', { duration: 3000 });
+        reject('No file selected');
+        return;
       }
-    },
-    error: (err) => {
-      console.error('Upload failed:', err);
-      this.snackBar.open('Upload failed. Please try again.', 'Close', { duration: 5000 });
-      this.uploadProgress = 0;
-      this.loading = false;
-    },
-    complete: () => {
-      this.loading = false;
-    }
-  });
 
-  })
-}
+      // Validate file type (PDF only)
+      if (this.selectedFile.type !== 'application/pdf') {
+        this.snackBar.open('Only PDF files are allowed', 'Close', { duration: 3000 });
+        reject('Invalid file type');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', this.selectedFile);
+      formData.append('folderName', this.selectedFolder);
+
+      console.log('Uploading file to folder:', this.selectedFolder);
+
+      // Show loading state
+      this.loading = true;
+      this.uploadProgress = 0;
+
+      this.documentService.upload(formData).subscribe({
+        next: (event: any) => {
+          // Handle upload progress
+          if (event.type === HttpEventType.UploadProgress) {
+            this.uploadProgress = Math.round(100 * event.loaded / (event.total || 1));
+          } else if (event.type === HttpEventType.Response) {
+            // Upload complete
+            this.snackBar.open('File uploaded successfully', 'Close', { duration: 3000 });
+            this.refreshFiles();
+            // this.selectedFile = null;
+            // this.selectedFilename = '';
+            // if (this.fileInput) {
+            //   this.fileInput.nativeElement.value = '';
+            // }
+            this.uploadProgress = 0;
+
+            const fileUrl = event.body.fileUrl || event.body.url;
+            if (!fileUrl) {
+              reject('No file URL returned by server');
+            } else {
+              resolve(fileUrl);
+            }
+            this.selectedFile = null;
+            this.selectedFilename = '';
+            if (this.fileInput) {
+              this.fileInput.nativeElement.value = '';
+            }
+          }
+        },
+        error: (err) => {
+          console.error('Upload failed:', err);
+          this.snackBar.open('Upload failed. Please try again.', 'Close', { duration: 5000 });
+          this.uploadProgress = 0;
+          this.loading = false;
+        },
+        complete: () => {
+          this.loading = false;
+        }
+      });
+
+    })
+  }
 
 
   async handleViewDocument(filename: string): Promise<void> {
@@ -453,7 +454,7 @@ uploadFile(): Promise<string>  {
       // console.log("selectdfile: ",this.selectedFile);
       // const pdfUrl = `http://localhost:8000/api/view`;
       const pdfUrl = filename;
-      
+
 
       // Fetch using browser API (Fetch) or Angular HttpClient
       // const response = await fetch(pdfUrl, {
@@ -464,7 +465,7 @@ uploadFile(): Promise<string>  {
       //     'Pragma': 'no-cache'
       //   }
       // });
-const response = await fetch(pdfUrl, {
+      const response = await fetch(pdfUrl, {
         method: 'GET',
         headers: {
           'Cache-Control': 'no-cache',
@@ -472,18 +473,18 @@ const response = await fetch(pdfUrl, {
         },
         // body: filename
       });
-//       this.http.post('http://localhost:8000/api/view', { filename }, { responseType: 'blob' }).subscribe({
-//   next: (blob: Blob) => {
-//     const blobUrl = URL.createObjectURL(blob);
-//     const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(blobUrl);
-//     this.currentPdf = safeUrl;
-//     this.viewerOpen = true;
-//   },
-//   error: async (error: HttpErrorResponse) => {
-//     const errorText = await error.error.text();
-//     console.error("Error fetching PDF:", errorText);
-//   }
-// });
+      //       this.http.post('http://localhost:8000/api/view', { filename }, { responseType: 'blob' }).subscribe({
+      //   next: (blob: Blob) => {
+      //     const blobUrl = URL.createObjectURL(blob);
+      //     const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(blobUrl);
+      //     this.currentPdf = safeUrl;
+      //     this.viewerOpen = true;
+      //   },
+      //   error: async (error: HttpErrorResponse) => {
+      //     const errorText = await error.error.text();
+      //     console.error("Error fetching PDF:", errorText);
+      //   }
+      // });
 
       // if (!response.ok) {
       //   throw new Error(`Failed to load PDF: ${response.status} ${response.statusText}`);
@@ -503,137 +504,124 @@ const response = await fetch(pdfUrl, {
     } finally {
       this.loading = false;
     }
-}
-
-
- handleProcessDocument(fileUrl:any): void {
-  // const file = this.selectedFile;
-  // this.selectedFilename=file.name;
-  this.originalFileUrl = fileUrl;
-  console.log("filename ",fileUrl);
-  this.selectedFilename = this.getFileName(fileUrl);
-  // this.selectedFilename = fileUrl;
-    if (!this.selectedFilename) return;
-  
-    this.loading = true;
-    this.dataLoading = true;
-this.error = '';
-  this.success = '';
-
-  this.handleViewDocument(fileUrl).then(() => {
-    this.http.post<any>('http://localhost:8000/api/process', {
-      filename: fileUrl
-    }).subscribe({
-      next: (res) => {
-        const extractedData = res.data || res;
-        if (!extractedData) {
-          throw new Error('No data extracted from document ');
-        }
-
-        console.log('Extracted Data:', extractedData);
-        this.extractedData = extractedData;
-        this.formData = { ...extractedData };
-        this.success = 'Document processed successfully!';
-        this.dataLoading = false;
-        console.log("fileUrl",fileUrl);
-        this.handleSubmit(fileUrl);
-      },
-      error: (err) => {
-        console.error('Error processing document:', err);
-        this.error = err.error?.detail || 'Failed to process document';
-        this.dataLoading = false;
-      },
-      complete: () => {
-        this.loading = false;
-      }
-    });
-  }).catch((err) => {
-    console.error('Error loading PDF:', err);
-    this.error = `Failed to view document: ${err.message}`;
-    this.loading = false;
-    this.dataLoading = false;
-  });
-
   }
+
+
+  // handleProcessDocument(fileUrl: any): void {
+  //   // const file = this.selectedFile;
+  //   // this.selectedFilename=file.name;
+  //   this.originalFileUrl = fileUrl;
+  //   console.log("filename ", fileUrl);
+  //   this.selectedFilename = this.getFileName(fileUrl);
+  //   // this.selectedFilename = fileUrl;
+  //   if (!this.selectedFilename) return;
+
+  //   this.loading = true;
+  //   this.dataLoading = true;
+  //   this.error = '';
+  //   this.success = '';
+
+  //   this.handleViewDocument(fileUrl).then(() => {
+  //     this.http.post<any>('http://localhost:8000/api/process', {
+  //       filename: fileUrl
+  //     }).subscribe({
+  //       next: (res) => {
+  //         const extractedData = res.data || res;
+  //         if (!extractedData) {
+  //           throw new Error('No data extracted from document ');
+  //         }
+
+  //         console.log('Extracted Data:', extractedData);
+  //         this.extractedData = extractedData;
+  //         this.formData = { ...extractedData };
+  //         this.success = 'Document processed successfully!';
+  //         this.dataLoading = false;
+  //         console.log("fileUrl", fileUrl);
+  //         this.handleSubmit(fileUrl);
+  //       },
+  //       error: (err) => {
+  //         console.error('Error processing document:', err);
+  //         this.error = err.error?.detail || 'Failed to process document';
+  //         this.dataLoading = false;
+  //       },
+  //       complete: () => {
+  //         this.loading = false;
+  //       }
+  //     });
+  //   }).catch((err) => {
+  //     console.error('Error loading PDF:', err);
+  //     this.error = `Failed to view document: ${err.message}`;
+  //     this.loading = false;
+  //     this.dataLoading = false;
+  //   });
+
+  // }
+
   extractedKeys(): string[] {
     // console.log(this.extractedData);
-    
 
-    return Object.keys(this.extractedData || {}).filter(k => k !== 'status' && typeof this.extractedData[k] !== 'object');}
-  
 
-    formatLabel(key: string): string {
+    return Object.keys(this.extractedData || {}).filter(k => k !== 'status' && typeof this.extractedData[k] !== 'object');
+  }
+
+
+  formatLabel(key: string): string {
     return key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim();
   }
-    handleSubmit(fileUrl: any): void {
-      console.log("Storing extractedData ..");
-      console.log("FileURL ",fileUrl)
-      const payload = {
-    fileurl: fileUrl, // or any custom name
-    data: this.formData
-  };
+  handleSubmit(fileUrl: any): void {
+    console.log("Storing extractedData ..");
+    console.log("FileURL ", fileUrl)
+    const payload = {
+      fileurl: fileUrl, // or any custom name
+      data: this.formData
+    };
     this.http.post('http://localhost:8000/api/submit', payload).subscribe({
-      next: res => {console.log('Response received:', res);
+      next: res => {
+        console.log('Response received:', res);
         // this.success = 'Form submitted!'; 
         this.snackBar.open('Changes saved successfully!', 'Close', {
-        duration: 3000,
-        verticalPosition: 'bottom'
-      });
-    },
+          duration: 3000,
+          verticalPosition: 'bottom'
+        });
+      },
       error: err => this.error = 'Submission failed'
     });
   }
-//   toFormData(res: Object){
-//     console.log("res ",res);
-//     const formData1 = new FormData();
 
-//   Object.entries(res).forEach(([key, value]) => {
-//   formData1.append(key, value !== null ? value.toString() : '');
-  
-  
-// });
-// this.formData =formData1;
-// this.extractedData=formData1;
-// for (const [key, value] of this.formData['entries']()) {
-//   console.log(`${key}: ${value}`);
-// }
-//   }
-createFormFromJson(json: Record<string, any>): FormGroup {
-  const formControls = Object.keys(json).reduce((acc, key) => {
-    acc[key] = [json[key]];
-    return acc;
-  }, {} as { [key: string]: any });
-// console.log(this.fb.group(formControls))
-  return this.fb.group(formControls);
+  createFormFromJson(json: Record<string, any>): FormGroup {
+    const formControls = Object.keys(json).reduce((acc, key) => {
+      acc[key] = [json[key]];
+      return acc;
+    }, {} as { [key: string]: any });
+    // console.log(this.fb.group(formControls))
+    return this.fb.group(formControls);
   }
-scrollToDataPanel(){
-  this.dataPanel.nativeElement.scrollIntoView({ behavior: 'smooth' })
-}
+  scrollToDataPanel() {
+    this.dataPanel.nativeElement.scrollIntoView({ behavior: 'smooth' })
+  }
 
 
-  getResults(filePath: any){
-    this.http.post('http://localhost:8000/api/getResults',{
-      filename:filePath
-    }).subscribe(res=>{
+  getResults(filePath: any) {
+    this.http.post('http://localhost:8000/api/getResults', {
+      filename: filePath
+    }).subscribe(res => {
       //  this.extractedData=res;
-      this.datares=res;
+      this.datares = res;
       // JSON.stringify(this.extractedData, null, 2)
-      
+
       // this.extractedData = typeof res === 'string' ? JSON.parse(res) : JSON.parse(JSON.stringify(res));
-      this.extractedData=JSON.parse(this.datares);
-      // this.datares = res;
-      // this.formgrp = this.createFormFromJson(res);
+      this.extractedDataFulldata = JSON.parse(this.datares);
+      this.extractedData = this.extractedDataFulldata.data;
       this.showFormView = true;
       this.formData = { ...this.extractedData }
       console.log('Type of res:', typeof res);
-// console.log('Raw response:', res);
+      // console.log('Raw response:', res);
       console.log('Type of extractedData:', typeof this.extractedData);
-console.log('Is array:', Array.isArray(this.extractedData));
+      console.log('Is array:', Array.isArray(this.extractedData));
       console.log('Raw extractedData:', this.extractedData);
-console.log('Filtered keys:', Object.keys(this.extractedData).filter(k => typeof this.extractedData[k] !== 'object'));
+      console.log('Filtered keys:', Object.keys(this.extractedData).filter(k => typeof this.extractedData[k] !== 'object'));
       this.handleViewDocument(filePath)
       // console.log(typeof this.formData);
     })
-    
   }
 }

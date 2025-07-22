@@ -14,22 +14,22 @@ const router = express.Router();
 
 // Health check endpoint for API
 router.get('/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
+  res.json({
+    status: 'healthy',
     timestamp: new Date().toISOString(),
     service: 'TA AI Document Analyzer API'
   });
 });
 
 //Input Project Name
-router.post('/input',async(req,res)=>{
-  const val =req.body.value;  
+router.post('/input', async (req, res) => {
+  const val = req.body.value;
   const userId = req.cookies.user_Id;
-  console.log("Req body : ",req.body);
-  console.log("Project Name is: ",val);
-  res.cookie('projectName',val,{httpOnly:true});
-  const resp = await s3Service.createFolder(userId,val);
-  console.log("Inside Document: "+resp);
+  console.log("Req body : ", req.body);
+  console.log("Project Name is: ", val);
+  res.cookie('projectName', val, { httpOnly: true });
+  const resp = await s3Service.createFolder(userId, val);
+  console.log("Inside Document: " + resp);
   res.json({ success: true, val });
 });
 
@@ -38,41 +38,41 @@ router.delete('/deleteFolder', async (req, res) => {
   try {
     const { folderName } = req.body;
     const userId = req.cookies.user_Id;
-    
+
     if (!folderName) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Folder name is required' 
+      return res.status(400).json({
+        success: false,
+        error: 'Folder name is required'
       });
     }
-    
+
     if (!userId) {
-      return res.status(401).json({ 
-        success: false, 
-        error: 'User not authenticated' 
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated'
       });
     }
-    
+
     console.log(`Deleting folder: ${folderName} for user: ${userId}`);
     const result = await s3Service.deleteFolder(userId, folderName);
-    
+
     if (result.deleted) {
-      res.json({ 
-        success: true, 
-        message: result.message 
+      res.json({
+        success: true,
+        message: result.message
       });
     } else {
-      res.status(404).json({ 
-        success: false, 
-        error: result.message || 'Failed to delete folder' 
+      res.status(404).json({
+        success: false,
+        error: result.message || 'Failed to delete folder'
       });
     }
   } catch (error) {
     console.error('Error deleting folder:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       error: 'Failed to delete folder',
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -84,39 +84,39 @@ router.post('/delete', async (req, res) => {
     const userId = req.cookies.user_Id;
 
     if (!fileKey) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'File key is required' 
+      return res.status(400).json({
+        success: false,
+        error: 'File key is required'
       });
     }
 
     if (!userId) {
-      return res.status(401).json({ 
-        success: false, 
-        error: 'User not authenticated' 
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated'
       });
     }
 
     console.log(`Deleting file: ${fileKey} for user: ${userId}`);
-    
+
     const params = {
       Bucket: "taai-uploaded-documents", // Change to your bucket name
       Key: fileKey
     };
 
     const resp = await s3Service.deleteFile(fileKey);
-console.log("resp " , resp);
-    res.json({ 
-      success: true, 
-      message: `File ${fileKey} deleted successfully.` 
+    console.log("resp ", resp);
+    res.json({
+      success: true,
+      message: `File ${fileKey} deleted successfully.`
     });
 
   } catch (error) {
     console.error('Error deleting file:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       error: 'Failed to delete file',
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -125,21 +125,21 @@ console.log("resp " , resp);
 
 
 //get extractedData from s3
-router.post('/getExtractedData',async(req,res)=>{
-  try{
+router.post('/getExtractedData', async (req, res) => {
+  try {
     const file = req.body.file;
     const resp = await s3Service.getResults(file);
-    console.log("resp for getresults ",resp);
+    console.log("resp for getresults ", resp);
   }
 
-catch(e){
-  console.log("Error ",e);
-}
+  catch (e) {
+    console.log("Error ", e);
+  }
 });
 
 
 // store extractedData to s3
-router.post('/submit',async(req,res)=>{
+router.post('/submit', async (req, res) => {
 
   const fileurl = req.body.fileurl;
   const decodedUrl = decodeURIComponent(fileurl);
@@ -148,49 +148,49 @@ router.post('/submit',async(req,res)=>{
   const segments = path.split('/');
   const filename = segments.pop().replace(/\.[^/.]+$/, '');
   const folderPath = segments.join('/') + '/';
-  const extractedDataJSON =req.body.data;
+  const extractedDataJSON = req.body.data;
   const jsonString = JSON.stringify(extractedDataJSON);
   console.log(jsonString);
-  console.log("file: ",folderPath); 
-  const fileUrl = await s3Service.storeResults(folderPath,filename,jsonString);
+  console.log("file: ", folderPath);
+  const fileUrl = await s3Service.storeResults(folderPath, filename, jsonString);
   // console.log("Storing: ",fileurl);
-  res.json({fileUrl});
+  res.json({ fileUrl });
 
 });
 
-router.post('/getResults',async(req,res)=>{
-  try{
+router.post('/getResults', async (req, res) => {
+  try {
     const fileurl = req.body.filename;
-  const decodedUrl = decodeURIComponent(fileurl) ;
-    console.log("fileurl:  ",fileurl );
-  const path = decodedUrl.split('.amazonaws.com/')[1].split('?')[0];
-  const segments = path.split('/');
-  const filename = segments.pop().replace(/\.[^/.]+$/, '');
-  const folderPath = segments.join('/') + '/extractedData'; 
-    const response = await s3Service.getResults(folderPath,filename);
+    const decodedUrl = decodeURIComponent(fileurl);
+    console.log("fileurl:  ", fileurl);
+    const path = decodedUrl.split('.amazonaws.com/')[1].split('?')[0];
+    const segments = path.split('/');
+    const filename = segments.pop().replace(/\.[^/.]+$/, '');
+    const folderPath = segments.join('/') + '/extractedData';
+    const response = await s3Service.getResults(folderPath, filename);
     console.log(response);
     res.json(
-      response    );
+      response);
   }
-  catch(e){
-    console.log("Error: ",e);
+  catch (e) {
+    console.log("Error: ", e);
   }
 })
 
 //Get Files endpoint
-router.post('/getFiles',async (req,res) => {
-  try{
+router.post('/getFiles', async (req, res) => {
+  try {
     const userId = req.cookies.user_Id;
-console.log('UserId :',userId);
-const response = await s3Service.getFilesFolderwise(userId);
-// console.log("response: ",response);
-res.json({response});
+    console.log('UserId :', userId);
+    const response = await s3Service.getFilesFolderwise(userId);
+    // console.log("response: ",response);
+    res.json({ response });
 
 
   }
-  catch(e){
+  catch (e) {
     console.error('Error grouping files:', e);
-      res.status(500).json({ error: 'Failed to group files' });
+    res.status(500).json({ error: 'Failed to group files' });
   }
 
 });
@@ -200,7 +200,7 @@ async function processDocument(fileUrl, originalFilename, userId, projectName) {
   try {
     // Ensure extractedData directory exists in S3
     await s3Service.ensureExtractedDataDir(userId, projectName);
-    
+
     // Save processing status
     await s3Service.saveProcessingStatus(userId, projectName, originalFilename, 'processing', {
       startTime: new Date().toISOString(),
@@ -209,10 +209,10 @@ async function processDocument(fileUrl, originalFilename, userId, projectName) {
     });
 
     console.log('Processing document:', fileUrl);
-    
+
     // Process the document
     const result = await landingAI.analyzeDocument(fileUrl);
-    
+
     // Save successful result
     await s3Service.saveProcessingStatus(userId, projectName, originalFilename, 'json', {
       success: true,
@@ -220,20 +220,20 @@ async function processDocument(fileUrl, originalFilename, userId, projectName) {
       originalFilename: originalFilename,
       data: result
     });
-    
+
     console.log('Document processed successfully');
     return { success: true, result };
-    
+
   } catch (error) {
     console.error('Error processing document:', error);
-    
+
     // Save error details
     await s3Service.saveProcessingStatus(userId, projectName, originalFilename, 'error', {
       success: false,
       error: error.message,
       stack: error.stack
     });
-    
+
     return { success: false, error };
   }
 }
@@ -243,7 +243,7 @@ router.post('/upload', uploadMiddleware.single('file'), async (req, res) => {
   try {
     const userId = req.cookies.user_Id;
     const projName = req.body.folderName ? req.body.folderName : req.cookies.projectName;
-    
+
     console.log('Upload request received:', {
       body: req.body,
       file: req.file ? {
@@ -253,12 +253,12 @@ router.post('/upload', uploadMiddleware.single('file'), async (req, res) => {
       } : 'No file received',
       credentials: 'include'
     });
-    
+
     if (!req.file) {
       console.log('No file in request');
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'No file uploaded',
-        success: false 
+        success: false
       });
     }
 
@@ -266,15 +266,15 @@ router.post('/upload', uploadMiddleware.single('file'), async (req, res) => {
     if (req.file.mimetype !== 'application/pdf') {
       // Clean up uploaded file
       fs.unlinkSync(req.file.path);
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Only PDF files are allowed',
-        success: false 
+        success: false
       });
     }
 
     // Upload to S3
     const fileUrl = await s3Service.uploadFile(req.file, userId, projName);
-    
+
     // Clean up local file after upload
     fs.unlinkSync(req.file.path);
 
@@ -291,7 +291,7 @@ router.post('/upload', uploadMiddleware.single('file'), async (req, res) => {
     }
 
     console.log(`Starting document processing for: ${req.file.originalname}`);
-    
+
     // Check if document is already being processed
     const processingStatus = await s3Service.getProcessingStatus(userId, projName, req.file.originalname);
     if (processingStatus) {
@@ -302,7 +302,7 @@ router.post('/upload', uploadMiddleware.single('file'), async (req, res) => {
       } else if (processingStatus.status === 'error') {
         console.warn(`Document previously failed processing: ${req.file.originalname}`);
       }
-      
+
       // For this implementation, we'll proceed with processing again
       // You might want to change this behavior based on your requirements
       console.log('Attempting to reprocess document...');
@@ -322,9 +322,9 @@ router.post('/upload', uploadMiddleware.single('file'), async (req, res) => {
     let processCompleted = false;
     const processPromise = processDocument(
       { filename: fileUrl }, // Pass as object with filename property
-      req.file.originalname, 
-      userId, 
-      projName, 
+      req.file.originalname,
+      userId,
+      projName,
       processingId
     )
       .then(({ success, result, error }) => {
@@ -339,7 +339,7 @@ router.post('/upload', uploadMiddleware.single('file'), async (req, res) => {
       .catch(async (err) => {
         processCompleted = true;
         console.error('Error in document processing pipeline:', err);
-        
+
         // Save error status if not already done
         try {
           await s3Service.saveProcessingStatus(userId, projName, req.file.originalname, 'error', {
@@ -353,7 +353,7 @@ router.post('/upload', uploadMiddleware.single('file'), async (req, res) => {
         } catch (saveErr) {
           console.error('Failed to save error status:', saveErr);
         }
-        
+
         return { success: false, error: err };
       });
 
@@ -393,16 +393,16 @@ router.post('/upload', uploadMiddleware.single('file'), async (req, res) => {
 
   } catch (error) {
     console.error('Upload error:', error);
-    
+
     // Clean up file if it exists
     if (req.file && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       error: 'Upload failed',
       message: error.message,
-      success: false 
+      success: false
     });
   }
 });
@@ -411,7 +411,7 @@ router.post('/upload', uploadMiddleware.single('file'), async (req, res) => {
 // router.post('/process', async (req, res) => {
 //   try {
 //     const { fileUrl } = req.body;
-    
+
 //     if (!fileUrl) {
 //       return res.status(400).json({ 
 //         error: 'File URL is required' 
@@ -421,7 +421,7 @@ router.post('/upload', uploadMiddleware.single('file'), async (req, res) => {
 //     // Process document using LandingAI service
 //     console.log('Backend route: calling LandingAI service...');
 //     const result = await landingAIService.processDocument(fileUrl);
-    
+
 //     console.log('Backend route: received result from LandingAI service');
 //     console.log('Backend route: result documentId:', result.documentId);
 //     console.log('Backend route: sending result to frontend...');
@@ -436,21 +436,21 @@ router.post('/upload', uploadMiddleware.single('file'), async (req, res) => {
 //   }
 // });
 
-router.post('/process',async(req,res)=>{
-     try {
-      console.log("RequestBody ",req.body);
-    const fileUrl  = req.body;
-    
+router.post('/process', async (req, res) => {
+  try {
+    console.log("RequestBody ", req.body);
+    const fileUrl = req.body;
+
     if (!fileUrl) {
-      return res.status(400).json({ 
-        error: 'File URL is required' 
+      return res.status(400).json({
+        error: 'File URL is required'
       });
     }
 
     // Process document using LandingAI service
     console.log('Backend route: calling LandingAI service...');
     const result = await landingAI.analyzeDocument(fileUrl);
-    
+
     console.log('Backend route: received result from LandingAI service');
     console.log('Backend route: result documentId:', result.documentId);
     console.log('Backend route: sending result to frontend...');
@@ -458,9 +458,9 @@ router.post('/process',async(req,res)=>{
 
   } catch (error) {
     console.error('Processing error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Document processing failed',
-      message: error.message 
+      message: error.message
     });
   }
 
@@ -515,17 +515,17 @@ router.post('/process',async(req,res)=>{
 
 
 
-router.post('/view',async (req,res)=>{
+router.post('/view', async (req, res) => {
 
   const fileurl = req.body.filename;
-  console.log("FILENAME: " , fileurl);
+  console.log("FILENAME: ", fileurl);
   try {
     const fileData = await s3Service.readS3File(fileurl);
     res.setHeader('Content-Type', 'application/pdf'); // or appropriate MIME type
     console.log(fileData);
     res.send(fileData);
   } catch (err) {
-  console.log("Error: " ,err);
+    console.log("Error: ", err);
     res.status(500).json({ error: err.message });
   }
 })
@@ -539,17 +539,17 @@ router.post('/view',async (req,res)=>{
 router.get('/status/:documentId', async (req, res) => {
   try {
     const { documentId } = req.params;
-    
+
     // In a real implementation, this would check the actual processing status
     const status = await landingAIService.getProcessingStatus(documentId);
-    
+
     res.json(status);
 
   } catch (error) {
     console.error('Status check error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to get processing status',
-      message: error.message 
+      message: error.message
     });
   }
 });
