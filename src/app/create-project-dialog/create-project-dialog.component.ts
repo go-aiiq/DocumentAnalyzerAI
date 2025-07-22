@@ -1,16 +1,26 @@
 import { Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogRef, MatDialogContent } from '@angular/material/dialog';
-import { MatFormField, MatInputModule } from '@angular/material/input';
+import { MatDialogRef, MatDialogModule, MatDialogContent } from '@angular/material/dialog';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatIconModule } from '@angular/material/icon';
 
 
 
 
 @Component({
   selector: 'app-create-project-dialog',
-  imports: [MatDialogContent, MatButtonModule,MatInputModule,MatFormField,ReactiveFormsModule],
+  imports: [
+    MatDialogModule,
+    MatDialogContent,
+    MatButtonModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatIconModule,
+    ReactiveFormsModule
+  ],
   templateUrl: './create-project-dialog.component.html',
   styleUrl: './create-project-dialog.component.scss'
 })
