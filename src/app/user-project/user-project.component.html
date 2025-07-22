@@ -24,7 +24,7 @@
         *ngFor="let folder of folderNames"
         [class.active]="folder === selectedFolder"
         (click)="$event.stopPropagation(); selectFolder(folder)"
-        class="dashboard-item">
+        class="folder-item">
         <div class="folder-content">
           <div class="folder-header">
             <span class="folder-name">{{ folder }}</span>
