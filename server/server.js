@@ -16,7 +16,7 @@ const app = express();
 const PORT = process.env.PORT || 8000;
 const BASE_URL = process.env.API_BASE_URL;
 const redirectBase = process.env.REDIRECT_BASE_URL||'http://localhost:5000';
-const cognitoURL = process.env.COGNITO_URL;
+const cognitoURL = process.env.COGNITO_URL||'http://localhost:8000';
 
 
 

@@ -14,7 +14,13 @@ export class AppComponent {
   }
 
   onLogout():void{
-    window.location.href = 'http://localhost:8000/logout';;
+     if((window.location.hostname)==='localhost'){
+    window.location.href= 'http://localhost:8000/logout';
+  }
+  if((window.location.hostname).includes('elasticbeanstalk')){
+    window.location.href= 'https://documentanalyzer.eu-north-1.elasticbeanstalk.com/logout';
+  }
+  // window.location.href='https://documentanalyzer.eu-north-1.elasticbeanstalk.com/api';   
 
   }
 }
