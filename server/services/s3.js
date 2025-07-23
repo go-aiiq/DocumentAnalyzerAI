@@ -84,7 +84,8 @@ class S3Service {
       const result = await this.s3.upload(uploadParams).promise();
       console.log(`S3 upload successful: ${result.Location}`);
       // Ensure the file exists in S3 before returning the URL
-      await this.s3.headObject({ Bucket: this.bucketName, Key: fileKey }).promise();
+      const headResult = await this.s3.headObject({ Bucket: this.bucketName, Key: fileKey }).promise();
+      console.log("S3 object exists to continue processing it further:", headResult);
       // Return the public URL of the uploaded file
       return result.Location;
 
