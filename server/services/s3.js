@@ -86,9 +86,16 @@ class S3Service {
       // Ensure the file exists in S3 before returning the URL
       const headResult = await this.s3.headObject({ Bucket: this.bucketName, Key: fileKey }).promise();
       console.log("S3 object exists to continue processing it further:", headResult);
-      // Return the public URL of the uploaded file
-      return result.Location;
+      // Generate a signed URL for the uploaded file
+      const signedUrl = this.s3.getSignedUrl('getObject', {
+        Bucket: this.bucketName,
+        Key: fileKey,
+        Expires: 60 * 15
+      });
 
+      console.log("Signed URL:", signedUrl);
+      // Return the public URL of the uploaded file
+      return signedUrl;
     } catch (error) {
       console.error('S3 upload error:', error);
       throw new Error(`Failed to upload file to S3: ${error.message}`);
@@ -375,7 +382,7 @@ console.log(`message: Unsuccessful Upload`, err );
     }
   }
 
-  async generatePresignedUrl(fileUrl, expiresIn = 3600) {
+  async generatePresignedUrl(fileUrl, expiresIn = 60 * 15) {
     try {
       if (this.mockMode) {
         // Mock mode for development
