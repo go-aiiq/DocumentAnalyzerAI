@@ -604,6 +604,7 @@ try{
 
 router.post('/getCreatedSections',async(req,res)=>{
   try{
+
     const fileurl = req.body.fileurl;
     console.log("fileurl: ",fileurl);
     const response= await s3Service.getCreatedSections(fileurl);
@@ -614,5 +615,22 @@ router.post('/getCreatedSections',async(req,res)=>{
 catch(e){
   console.log("Error in get created sections: ",e)
 }})
+
+router.post('/deleteSection',async(req,res)=>{
+  try{
+    const section = req.body.section;
+    const filename = req.body.filename;
+    console.log("filename:",filename);
+    console.log("section: ",section);
+    const response = await s3Service.deleteSection(filename,section);
+    console.log(response);
+    res.json(response);
+  }
+  catch(e){
+    console.log(e)
+  }
+}
+
+)
 
 module.exports = router;

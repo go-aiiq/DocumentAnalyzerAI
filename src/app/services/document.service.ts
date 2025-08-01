@@ -272,4 +272,12 @@ deleteFolder(folderName: string): Observable<any> {
   triggerRefresh() {
     this.refreshSectionsSubject.next();
   }
+
+  deleteSection(filename:string,section:Section){
+    console.group("Section: ",section);
+    return this.http.post(`${this.baseUrl}/deleteSection`,{
+      filename:filename,
+      section:section
+    });
+  }
 }

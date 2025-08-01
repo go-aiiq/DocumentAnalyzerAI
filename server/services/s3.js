@@ -606,6 +606,61 @@ console.log(`message: Unsuccessful Upload`, err );
       throw new Error(`Failed to delete folder: ${error.message}`);
     }
   }
+
+  async deleteSection(fileurl,section){
+    
+    try{
+       //Convert stream to string
+    const streamToString = async (stream) => {
+  const chunks = [];
+  for await (const chunk of stream) {
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks).toString("utf-8");
+};
+
+//Deep isEqual cehck
+const isEqual = (a, b) => {
+  return JSON.stringify(a) === JSON.stringify(b);
+};
+
+    // Get the file
+      const decodedUrl = decodeURIComponent(fileurl);
+      console.log("fileurl: ",fileurl);
+      console.log("decodedUrl: ",decodedUrl)
+      const match=decodedUrl.match(/amazonaws\.com\/([^?]+)/);
+      const folderpathmatch = match ? match[1] : null;
+      const folderpath=folderpathmatch.substring(0, folderpathmatch.lastIndexOf('/'))
+      const filename =folderpathmatch.split('/').pop().replace(/\.pdf$/, "");
+      const fileKey= `${folderpath}/sections/${filename}.json`
+      
+    const getCommand = {
+      Bucket: this.bucketName,
+      Key: fileKey,
+    };
+    const response = await this.s3.getObject(getCommand).promise();
+    const fileContent = response.Body.toString('utf-8');
+
+    //Parse
+    const jsonArray = JSON.parse(fileContent);
+    const updatedArray = jsonArray.filter(obj => !isEqual(obj, section));
+
+    // Write updated array back to S3
+    const putCommand = {
+      Bucket: this.bucketName,
+      Key: fileKey,
+      Body: JSON.stringify(updatedArray, null, 2),
+      ContentType: "application/json",
+    };
+    const r = await this.s3.putObject(putCommand).promise();
+    return r;
+  }
+
+    catch(e){
+      console.log(e);
+    }
+   
+}
 }
 
 module.exports = new S3Service();

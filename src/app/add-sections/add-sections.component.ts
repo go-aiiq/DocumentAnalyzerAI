@@ -32,6 +32,7 @@ export interface Section{
 export class AddSectionsComponent implements OnInit,OnChanges {
   @Input() selectedPages!: number[];
   @Input() selectedFile!:string;
+  @Input() selectedSection!: Section;
   createdSections:any[]=[];
   // private _selectedPages: Set<number> = new Set();
   // @Input()
@@ -72,6 +73,9 @@ export class AddSectionsComponent implements OnInit,OnChanges {
     console.log('onchanges called')
     if(changes['selectedPages'] ){
       console.log(this.selectedPages)
+    }
+    if(changes['selectedSection'] && this.selectedSection){
+      this.newSection=this.selectedSection
     }
   }
 

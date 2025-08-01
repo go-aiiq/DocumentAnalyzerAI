@@ -13,11 +13,12 @@ import { MatList, MatListModule } from "@angular/material/list";
 import { MatIconModule } from "@angular/material/icon";
 import { MatButtonModule } from '@angular/material/button';
 import { range } from 'rxjs';
+import { MatCardModule } from '@angular/material/card';
 
 
 @Component({
   selector: 'app-pdf-viewer',
-  imports: [CommonModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatProgressSpinnerModule, AddSectionsComponent, MatList, MatListModule, MatIconModule,MatButtonModule],
+  imports: [CommonModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatProgressSpinnerModule, AddSectionsComponent, MatList, MatListModule, MatIconModule,MatButtonModule, MatCardModule],
   templateUrl: './pdf-viewer.component.html',
   styleUrl: './pdf-viewer.component.scss'
 })
@@ -32,6 +33,9 @@ export class PdfViewerComponent implements OnInit {
   selectedFile: any
   isRendering!: boolean;
   createdSections:any[]=[];
+  selectedSection!: Section;
+  pdfDownloading: boolean = false;
+
  constructor(private documentService:DocumentService, private selectedPagesService: SelectedPagesService){
   pdfjsLib.GlobalWorkerOptions.workerSrc  = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
  }
@@ -65,11 +69,11 @@ export class PdfViewerComponent implements OnInit {
     // reader.onload = async (e: ProgressEvent<FileReader>) => {
     //   const typedarray = new Uint8Array(e.target!.result as ArrayBuffer);
     //   this.pdfDoc = await pdfjsLib.getDocument({ data: typedarray }).promise;
+    this.pdfDownloading=true
     this.pdfDoc = await pdfjsLib
       .getDocument({ url: input.url })
       .promise;
       this.renderThumbnails();
-    
       
     // };
 
@@ -83,7 +87,7 @@ export class PdfViewerComponent implements OnInit {
 
 
   }
-      this.pageImages = [];
+    this.pageImages = [];
     this.isRendering = true;
 
   const numPages = this.pdfDoc.numPages;
@@ -97,6 +101,7 @@ export class PdfViewerComponent implements OnInit {
       canvas.width = viewport.width;
 
       await page.render({ canvasContext: context, viewport }).promise;
+      this.pdfDownloading=false;
       this.pageImages.push(canvas.toDataURL('image/png'));
       
     }
@@ -137,12 +142,25 @@ export class PdfViewerComponent implements OnInit {
     })
    
   };
-  deleteSection(){
 
+  deleteSection(section:Section){
+
+    this.documentService.deleteSection(this.selectedFile,section).subscribe((res:any)=>{
+      console.log(section);
+      console.log(res);
+      
+      let delIndex = this.createdSections.findIndex(createdSection=>createdSection.title==section.title && createdSection.endPage==section.endPage && createdSection.startPage==section.startPage);
+      if(delIndex>=0){
+        this.createdSections.splice(delIndex,1);
+      }
+      
+    })
   }
 
   onSectionSelect(section: Section) {
     this.selectedPages = []
+    this.selectedSection=section
+    // console.log(this.selectedSection);
     range(section.startPage-1, section.endPage-section.startPage+1).subscribe(selectedPageNumber => 
       this.selectedPages.push(selectedPageNumber)
     )

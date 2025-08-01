@@ -10,31 +10,38 @@
     </mat-option>
   </mat-select>
   </mat-form-field>
-  <app-add-sections [selectedPages]="selectedPages" [selectedFile]="selectedFile"></app-add-sections>
+  <app-add-sections [selectedSection]="selectedSection" [selectedPages]="selectedPages" [selectedFile]="selectedFile"></app-add-sections>
 </div>
 
 
 <div class="middle-panel">
-  <h3>Document Viewer</h3>
+  <div class="sticky-header">
+    <h3>Document Viewer</h3>
+  </div>
   <p *ngIf="selectedFile" ><strong>Document:</strong> {{getFileName(selectedFile).split('?')[0]}}</p>
   
-<div class="pdf-grid" >  
-  <div *ngFor="let img of pageImages; index as i"
-       class="thumbnail"
-       [class.selected]="selectedPages.includes(i)"
-       (click)="toggleSelection(i, $event)">
-    <img [src]="img" />
-    <span class="page-number">Page {{ i + 1 }}</span>
-  </div>
+<div class="pdf-grid" >
+  <!-- <ng-template ngIf="pdfDownloading">
+    Loading...
+  </ng-template> -->
+  <!-- <ng-template *ngIf="!pdfDownloading"> -->
+    <div *ngFor="let img of pageImages; index as i"
+        class="thumbnail"
+        [class.selected]="selectedPages.includes(i)"
+        (click)="toggleSelection(i, $event)">
+      <img [src]="img" />
+      <span class="page-number">Page {{ i + 1 }}</span>
+    </div>
+  <!-- </ng-template> -->
   <mat-progress-spinner *ngIf="isRendering" diameter="50"></mat-progress-spinner>
 </div>
 </div>
 
 
 <div class="right-panel">
-  <h3>
+  <div class="sticky-header">
   <div style="display: flex; align-items: center; justify-content: space-between ; margin-top:-20px;">
-  Sections
+  <h3>Sections</h3>
   <div style="display: flex; justify-content: flex-end; margin:2px;">
   <button  mat-fab (click)="getCreatedSections()">
   <mat-icon>refresh</mat-icon>
@@ -43,16 +50,18 @@
   </div>
   
   </div>
-  </h3>
+</div>
 <mat-list *ngIf="selectedFile ; else noFileSelected">
   <mat-list-item *ngFor="let section of createdSections" class="transparent-card">
-     <div (click)="onSectionSelect(section)" class="card-content">
-      <h4>{{ section.title }}</h4>
-      <p>Pages {{ section.startPage }} - {{ section.endPage }}</p>
+     <div class="section">
+      <h4 (click)="onSectionSelect(section)">{{ section.title }}</h4>
+      <div class="section-details">
+        <p (click)="onSectionSelect(section)">Pages {{ section.startPage }} - {{ section.endPage }}</p>
+        <button mat-icon-button color="warn" class="delete-button" (click)="deleteSection(section)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
     </div>
-    <button mat-icon-button color="warn" class="delete-button" (click)="deleteSection()">
-      <mat-icon>delete</mat-icon>
-    </button>
   </mat-list-item>
 </mat-list>
 <ng-template #noFileSelected>
