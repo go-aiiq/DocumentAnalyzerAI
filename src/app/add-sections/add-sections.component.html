@@ -1,0 +1,40 @@
+
+<div class="editor-container">
+  <h3>Add Section</h3>
+
+  <!-- Section Dropdown -->
+  <mat-form-field>
+    <mat-label>Sections</mat-label>
+    <mat-select [(ngModel)]="newSection.title"  >
+      <mat-option value="" disabled style=" background-color: #ffffff; border-radius: 4px;">Select a section</mat-option>
+      <mat-option *ngFor="let title of availableSections" [value]="title" style=" background-color: #ffffff; border-radius: 4px;">
+        {{ title }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+   
+
+   Start Page
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Start Page</mat-label>
+    <input matInput type="number" [(ngModel)]="newSection.startPage" />
+  </mat-form-field>
+
+  End Page 
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>End Page</mat-label>
+    <input matInput type="number" [(ngModel)]="newSection.endPage" />
+  </mat-form-field>
+
+  <!-- Add Button -->
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="addSection()"
+  >
+    Add Section
+  </button>
+</div>
+
+
+

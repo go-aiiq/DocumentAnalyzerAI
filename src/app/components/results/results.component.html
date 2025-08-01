@@ -1,122 +1,55 @@
-<div class="results-container">
-  <div class="header">
-    <button mat-icon-button (click)="goBack()" class="back-btn">
-      <mat-icon>arrow_back</mat-icon>
-    </button>
-    <div class="title">
-      <h2>Document Analysis Results</h2>
-      <p>Processed with LandingAI</p>
-    </div>
-  </div>
-
-  <div class="results-content" *ngIf="processingResult">
-    <!-- Summary Card -->
-    <mat-card class="summary-card">
-      <mat-card-header>
-        <mat-card-title>Processing Summary</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="summary-grid">
-          <div class="summary-item">
-            <span class="label">Document ID:</span>
-            <span class="value">{{ processingResult.documentId }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="label">Total Segments:</span>
-            <span class="value">{{ processingResult.segments.length }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="label">Processing Time:</span>
-            <span class="value">{{ processingResult.processingTime }}ms</span>
-          </div>
-          <div class="summary-item">
-            <span class="label">Status:</span>
-            <mat-chip [color]="processingResult.status === 'completed' ? 'primary' : 'warn'" selected>
-              {{ processingResult.status | titlecase }}
-            </mat-chip>
-          </div>
+<div class="dual-view-container" #dataPanel>
+  <div class="viewer-panel">
+    <div class="pdf-frame">
+      <!-- <ng-container *ngIf="loading; else showPdf">
+        <div class="loader">
+          <mat-spinner diameter="40"></mat-spinner>
         </div>
-      </mat-card-content>
-    </mat-card>
+      </ng-container> -->
 
-    <!-- Segments -->
-    <div class="segments-section">
-      <h3>Document Segments</h3>
-      
-      <mat-accordion>
-        <mat-expansion-panel *ngFor="let segment of processingResult.segments; let i = index">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <mat-icon>{{ segment.type === 'text' ? 'text_fields' : 
-                            segment.type === 'table' ? 'table_chart' : 
-                            segment.type === 'image' ? 'image' : 'description' }}</mat-icon>
-              Segment {{ i + 1 }} - {{ segment.type | titlecase }}
-            </mat-panel-title>
-            <mat-panel-description>
-              <mat-chip [color]="getConfidenceColor(segment.confidence)" selected>
-                {{ getConfidenceText(segment.confidence) }} Confidence
-              </mat-chip>
-            </mat-panel-description>
-          </mat-expansion-panel-header>
-
-          <div class="segment-content">
-            <div class="segment-details">
-              <div class="detail-row">
-                <span class="detail-label">Type:</span>
-                <span class="detail-value">{{ segment.type | titlecase }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Confidence:</span>
-                <span class="detail-value">{{ (segment.confidence * 100).toFixed(1) }}%</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Bounding Box:</span>
-                <span class="detail-value">
-                  x: {{ segment.boundingBox.x }}, y: {{ segment.boundingBox.y }}, 
-                  width: {{ segment.boundingBox.width }}, height: {{ segment.boundingBox.height }}
-                </span>
-              </div>
-            </div>
-
-            <div class="segment-content-area">
-              <h4>Content:</h4>
-              <div class="content-text">{{ segment.content }}</div>
-            </div>
-
-            <div class="segment-metadata" *ngIf="segment.metadata">
-              <h4>Metadata:</h4>
-              <div class="metadata-grid">
-                <div class="metadata-item" *ngFor="let meta of segment.metadata | keyvalue">
-                  <span class="meta-key">{{ meta.key }}:</span>
-                  <span class="meta-value">{{ meta.value }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </mat-expansion-panel>
-      </mat-accordion>
-    </div>
-
-    <!-- Actions -->
-    <div class="actions-section">
-      <button mat-raised-button color="primary" (click)="downloadResults()">
-        <mat-icon>download</mat-icon>
-        Download Results
-      </button>
-      <button mat-raised-button (click)="goBack()">
-        <mat-icon>upload</mat-icon>
-        Process Another Document
-      </button>
+      <div style="min-height: 100%;">
+        <iframe *ngIf="currentPdf"
+                [src]="currentPdf"
+                width="100%" height="100%"
+                style="border: none;">
+        </iframe>
+        <p *ngIf="!currentPdf" class="empty-message">Loading Document......</p>
+      </div>
     </div>
   </div>
 
-  <div class="no-results" *ngIf="!processingResult">
-    <mat-icon>error_outline</mat-icon>
-    <h3>No Results Found</h3>
-    <p>Please upload and process a document first.</p>
-    <button mat-raised-button color="primary" (click)="goBack()">
-      <mat-icon>arrow_back</mat-icon>
-      Go Back
-    </button>
+ <div class="data-panel">
+  <!-- <ng-container *ngIf="dataLoading; else showForm">
+    <div class="loader-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p class="loading-text">Extracting data from document...</p>
+    </div>
+  </ng-container> -->
+
+  <div>
+    <ng-container *ngIf="extractedData">
+      <h3>Extracted Data</h3>
+      <mat-divider></mat-divider>
+
+      <form>
+        <ng-container *ngFor="let key of extractedKeys()">
+          <mat-form-field appearance="fill" class="field">
+            <mat-label>{{ formatLabel(key) }}</mat-label>
+            <textarea matInput  [(ngModel)]="formData[key]" rows="2" name="{{key}}"></textarea>
+          </mat-form-field>
+        </ng-container>
+
+        <div class="actions">
+          <button mat-stroked-button color="primary" (click)="formData = {}">
+            Reset Changes
+          </button>
+          <button mat-raised-button color="primary" (click)="handleSubmit(filePath)">
+            Save Changes
+          </button>
+          
+        </div>
+      </form>
+    </ng-container>
+  </div>
   </div>
 </div>

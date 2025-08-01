@@ -55,8 +55,17 @@
   <main class="project-content">
     <ng-container *ngIf="selectedFolder; else noFolderSelected">
       <div class="file-list">
+        
         <ng-container *ngIf="selectedFolder !== 'Project'; else dashboardView">
-          <h3>Files in "{{ selectedFolder }}"</h3>
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+          
+          <h3>Files in "{{ selectedFolder }}"</h3> 
+          <!-- <div style="display: flex; justify-content: flex-end;"> -->
+          <button mat-raised-button class="outlined-button" (click)="scrollToTarget()">
+          <mat-icon>arrow_downward</mat-icon> Scroll to Section
+          </button>
+          <!-- </div> -->
+          </div>         
         </ng-container>
         <ng-template #dashboardView>
           <h3>Dashboard: {{ getTotalPropertiesCount() }} {{ getTotalPropertiesCount() === 1 ? 'Property' : 'Properties' }}</h3>
@@ -123,7 +132,7 @@
                   </ng-container>
 
                   <ng-container *ngIf="file.hasJson && !file.isProcessing">
-                    <button mat-icon-button matTooltip="View" matTooltipPosition="below" (click)="getResults(file.url)">
+                    <button mat-icon-button matTooltip="View" matTooltipPosition="below" (click)="viewResults(file.url)">
                       <mat-icon>visibility</mat-icon>
                     </button>
                   </ng-container>
@@ -157,26 +166,21 @@
         <h3>Select a project or create a new one to get started</h3>
       </div>
     </ng-template>
+    <!-- <app-add-sections></app-add-sections> -->
+     <div *ngIf="selectedFolder" [attr.data-key]="refreshKey" #targetDiv> 
+     <app-pdf-viewer *ngIf="selectedFolder !== 'Project'" [selectedFolder]="processedFolders[selectedFolder]"></app-pdf-viewer>
+     </div>
   </main>
 </div>
 
-<div class="dual-view-container" #dataPanel>
-  <!-- Left: PDF Viewer -->
+
+<!-- Add Section -->
+
+
+
+
+<!-- <div class="dual-view-container" #dataPanel>
   <div class="viewer-panel">
-    <!-- <h3>Document: {{ selectedFile }}</h3> -->
-<!-- 
-    <div class="actions">
-       <a [href]="currentPdf" target="_blank" rel="noopener">
-          
-      <button mat-stroked-button color="primary">
-        <mat-icon>open_in_new</mat-icon> Open
-      </button>
-       
-          </a>
-      <button mat-stroked-button color="primary" (click)="downloadDocument()">
-        <mat-icon>cloud_download</mat-icon> Download
-      </button>
-    </div> -->
 
     <div class="pdf-frame">
       <ng-container *ngIf="loading; else showPdf">
@@ -196,7 +200,6 @@
     </div>
   </div>
 
-  <!-- 🧾 Right: Extracted Data Form -->
  <div class="data-panel">
   <ng-container *ngIf="dataLoading; else showForm">
     <div class="loader-container">
@@ -231,3 +234,4 @@
     </ng-container>
   </ng-template>
 </div>
+</div> -->

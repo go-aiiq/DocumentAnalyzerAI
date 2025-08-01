@@ -1,10 +1,10 @@
 // Angular core
 import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { HttpErrorResponse, HttpEventType } from '@angular/common/http';
+// import { CommonModule } from '@angular/common';
+import { HttpClientModule, HttpErrorResponse, HttpEventType,HttpClient  } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { HttpClient } from '@angular/common/http';
+// import { HttpClient } from '@angular/common/http';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 // Angular Material
@@ -25,12 +25,16 @@ import { CreateProjectDialogComponent } from '../create-project-dialog/create-pr
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { DocumentService } from '../services/document.service';
 import { FileSizePipe } from '../pipes/file-size.pipe';
+import { AddSectionsComponent } from "../add-sections/add-sections.component";
+import { PdfViewerComponent } from '../pdf-viewer/pdf-viewer.component';
+import { CommonModule } from '@angular/common';
+
 
 @Component({
   selector: 'app-user-project',
   standalone: true,
   imports: [
-    CommonModule,
+    
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,
@@ -44,14 +48,20 @@ import { FileSizePipe } from '../pipes/file-size.pipe';
     MatProgressSpinnerModule,
     MatSnackBarModule,
     MatTooltipModule,
-    FileSizePipe
-  ],
+    FileSizePipe,
+    PdfViewerComponent,
+    CommonModule
+    
+    
+    
+],
   templateUrl: './user-project.component.html',
   styleUrl: './user-project.component.scss'
 })
 export class UserProjectComponent {
   @ViewChild('dataPanel') dataPanel!: ElementRef;
   @ViewChild('fileInput') fileInput!: ElementRef;
+  @ViewChild('targetDiv', { static: false }) targetViewer!: ElementRef;
 
   // State
   folders: { [folder: string]: any[] } = {};
@@ -81,6 +91,7 @@ export class UserProjectComponent {
   data: any = null;
   datares: any = null;
   baseurl!:string;
+  refreshKey = 0;
 
   // Constants
   readonly Object = Object;
@@ -179,7 +190,8 @@ export class UserProjectComponent {
     this.selectedFolder = folder;
     this.selectedFile = null;
     this.selectedFilename = '';
-
+    
+    this.refreshKey++;
     // Only refresh files if not selecting the dashboard
     if (folder !== 'Project') {
       this.refreshFiles();
@@ -477,26 +489,26 @@ export class UserProjectComponent {
   formatLabel(key: string): string {
     return key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim();
   }
-  handleSubmit(fileUrl: any): void {
-    console.log("Storing extractedData ..");
-    console.log("FileURL ", fileUrl)
-    const payload = {
-      fileurl: fileUrl, // or any custom name
-      data: this.formData
-    };
+  // handleSubmit(fileUrl: any): void {
+  //   console.log("Storing extractedData ..");
+  //   console.log("FileURL ", fileUrl)
+  //   const payload = {
+  //     fileurl: fileUrl, // or any custom name
+  //     data: this.formData
+  //   };
     
-    this.http.post(`${this.getBaseUrl()}/submit`, payload).subscribe({
-      next: res => {
-        console.log('Response received:', res);
-        // this.success = 'Form submitted!'; 
-        this.snackBar.open('Changes saved successfully!', 'Close', {
-          duration: 3000,
-          verticalPosition: 'bottom'
-        });
-      },
-      error: err => this.error = 'Submission failed'
-    });
-  }
+  //   this.http.post(`${this.getBaseUrl()}/submit`, payload).subscribe({
+  //     next: res => {
+  //       console.log('Response received:', res);
+  //       // this.success = 'Form submitted!'; 
+  //       this.snackBar.open('Changes saved successfully!', 'Close', {
+  //         duration: 3000,
+  //         verticalPosition: 'bottom'
+  //       });
+  //     },
+  //     error: err => this.error = 'Submission failed'
+  //   });
+  // }
 
   createFormFromJson(json: Record<string, any>): FormGroup {
     const formControls = Object.keys(json).reduce((acc, key) => {
@@ -511,27 +523,27 @@ export class UserProjectComponent {
   }
 
 
-  getResults(filePath: any) {
-    this.http.post(`${this.getBaseUrl()}/getResults`, {
-      filename: filePath
-    }).subscribe(res => {
-      //  this.extractedData=res;
-      this.datares = res;
-      // JSON.stringify(this.extractedData, null, 2)
-
-      // this.extractedData = typeof res === 'string' ? JSON.parse(res) : JSON.parse(JSON.stringify(res));
-      this.extractedDataFulldata = JSON.parse(this.datares);
-      this.extractedData = this.extractedDataFulldata.data;
-      this.showFormView = true;
-      this.formData = { ...this.extractedData }
-      console.log('Type of res:', typeof res);
-      // console.log('Raw response:', res);
-      console.log('Type of extractedData:', typeof this.extractedData);
-      console.log('Is array:', Array.isArray(this.extractedData));
-      console.log('Raw extractedData:', this.extractedData);
-      console.log('Filtered keys:', Object.keys(this.extractedData).filter(k => typeof this.extractedData[k] !== 'object'));
-      this.handleViewDocument(filePath)
-      // console.log(typeof this.formData);
+  viewResults(filePath: any) {
+    const urlTree = this.router.createUrlTree(['/results'], {
+      queryParams: { filePath }
     })
+    const fullUrl = this.router.serializeUrl(urlTree);
+    window.open(fullUrl, '_blank');
+    // this.documentService.getResults(filePath).subscribe(res => {
+    //   const newTab = window.open('/results', '_blank');
+    //   newTab?.addEventListener('load', () => {
+    //     newTab?.postMessage(JSON.stringify({ res: res, filePath: filePath }), window.location.origin);
+    //   });
+    //   this.datares = res;
+    //   this.extractedDataFulldata = JSON.parse(this.datares);
+    //   this.extractedData = this.extractedDataFulldata.data;
+    //   this.showFormView = true;
+    //   this.formData = { ...this.extractedData }
+    //   this.handleViewDocument(filePath)
+    // })
   }
+  scrollToTarget() {
+    if (this.targetViewer) {
+    this.targetViewer.nativeElement.scrollIntoView({ behavior: 'smooth',block: 'start' });
+  }}
 }

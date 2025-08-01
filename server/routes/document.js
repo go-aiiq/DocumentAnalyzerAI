@@ -554,4 +554,60 @@ router.get('/status/:documentId', async (req, res) => {
   }
 });
 
+
+//Get sections
+router.get('/getSections',async(req,res) =>{
+  res.json([
+    'Agency',
+    'Buyer Representation',
+    'Compensation Disclosure',
+    'Brokerage Disclosure',
+    'Pre-Approval or Proof of Funds',
+    'Written Statement',
+    'EM Receipt or Trustfunds Confirmation',
+    'CounterOffer',
+    'Purchase Agreement',
+    'Addendums/Addendums to PA',
+    `Seller's Property Disclosure or Alternatives`,
+    'Lead Based Paint Disclosure',
+    'Post Inspection Amendment',
+    'Addendums/Amendments to PA',
+    'Arbitration Agreement',
+    'Personal Property',
+    'Home Warranty',
+    'For your protection-Get a Home Inspection',
+    'Utility Info',
+    'MLS Printout'
+  ])
+}
+)
+
+//Add Sections
+router.post('/addSections',async(req,res) =>{
+try{
+  const sections = req.body.section;
+  const fileurl = req.body.fileurl;
+  console.log(sections);
+  const response= await s3Service.storeSections(sections,fileurl);
+  console.log(response);
+  res.json(response);
+
+}catch(e){
+  res.json(e)
+}
+})
+
+router.post('/getCreatedSections',async(req,res)=>{
+  try{
+    const fileurl = req.body.fileurl;
+    console.log("fileurl: ",fileurl);
+    const response= await s3Service.getCreatedSections(fileurl);
+    console.log(response);
+    res.json(response);
+
+  }
+catch(e){
+  console.log("Error in get created sections: ",e)
+}})
+
 module.exports = router;

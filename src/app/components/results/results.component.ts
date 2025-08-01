@@ -1,59 +1,115 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DocumentService } from '../../services/document.service';
-import { ProcessingResult, DocumentSegment } from '../../models/document.model';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDivider } from "@angular/material/divider";
+import { MatFormFieldModule } from "@angular/material/form-field";
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-results',
-  standalone: false,
+  standalone: true,
   templateUrl: './results.component.html',
-  styleUrls: ['./results.component.scss']
+  styleUrls: ['./results.component.scss'],
+  imports: [MatDivider, MatFormFieldModule, CommonModule, FormsModule,
+      ReactiveFormsModule, MatProgressSpinnerModule, MatInputModule, MatButtonModule ]
 })
 export class ResultsComponent implements OnInit {
-  processingResult: ProcessingResult | null = null;
-  isLoading: boolean = false;
+  currentPdf: SafeResourceUrl | null = null;
+  formData: Record<string, any> = {};
+  extractedData: any = null;
+  filePath: any;
+  // extractedDataForm: FormGroup;
 
   constructor(
     private documentService: DocumentService,
-    private router: Router
-  ) {}
+    private route: ActivatedRoute,
+    private sanitizer: DomSanitizer,
+     private snackBar: MatSnackBar,
+     private formBuilder: FormBuilder
+  ) {
+    // this.extractedDataForm = this.formBuilder.group({})
+  }
 
   ngOnInit(): void {
-    this.processingResult = this.documentService.getProcessingResult();
-    
-    if (!this.processingResult) {
-      // Redirect to upload page if no results found
-      this.router.navigate(['/']);
+    this.route.queryParams.subscribe((params:any) => {
+      this.viewResults(params.filePath)
+    })
+}
+
+  async handleViewDocument(filename: string): Promise<void> {
+    try {
+      // this.loading = true;
+      // this.error = '';
+
+      const encodedFilename = encodeURIComponent(filename);
+      const pdfUrl = filename;
+
+      const response = await fetch(pdfUrl, {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        },
+        // body: filename
+      });
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const safeBlobUrl = this.sanitizer.bypassSecurityTrustResourceUrl(blobUrl);
+
+      console.log('Viewing PDF:', pdfUrl);
+      this.currentPdf = safeBlobUrl;
+      // this.viewerOpen = true;
+    } catch (err: any) {
+      console.error('Error loading PDF:', err);
+      // this.error = `Failed to load PDF: ${err.message}`;
+      // this.viewerOpen = false;
+    } finally {
+      // this.loading = false;
     }
   }
 
-  goBack(): void {
-    this.router.navigate(['/']);
+  formatLabel(key: string): string {
+    return key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim();
   }
 
-  getConfidenceColor(confidence: number): string {
-    if (confidence >= 0.8) return 'primary';
-    if (confidence >= 0.6) return 'accent';
-    return 'warn';
+    extractedKeys(): string[] {
+    return Object.keys(this.extractedData || {}).filter(k => k !== 'status' && typeof this.extractedData[k] !== 'object');
   }
 
-  getConfidenceText(confidence: number): string {
-    if (confidence >= 0.8) return 'High';
-    if (confidence >= 0.6) return 'Medium';
-    return 'Low';
-  }
-
-  downloadResults(): void {
-    if (!this.processingResult) return;
-
-    const dataStr = JSON.stringify(this.processingResult, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+  handleSubmit(fileUrl: any): void {
+    console.log("Storing extractedData ..");
+    console.log("FileURL ", fileUrl)
+    const payload = {
+      fileurl: fileUrl, // or any custom name
+      data: this.formData
+    };
     
-    const exportFileDefaultName = 'document-analysis-results.json';
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
+    this.documentService.submitResult(payload).subscribe({
+      next: res => {
+        console.log('Response received:', res);
+        this.snackBar.open('Changes saved successfully!', 'Close', {
+          duration: 3000,
+          verticalPosition: 'bottom'
+        });
+      },
+      // error: err => this.error = 'Submission failed'
+    });
   }
+
+  viewResults(filePath: any) {
+    this.documentService.getResults(filePath).subscribe((res: any) => {
+      let extractedDataFulldata = JSON.parse(res);
+      this.extractedData = extractedDataFulldata.data;
+      this.formData = { ...this.extractedData }
+      this.handleViewDocument(filePath)
+    })
+  }
+
 }

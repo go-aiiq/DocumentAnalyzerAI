@@ -11,6 +11,7 @@ const routes: Routes = [
   {path:'',component: LoginComponentComponent},
   { path: 'upload', component: UploadComponent },
   { path: 'results', component: ResultsComponent },
+  { path: 'results', loadComponent: () => import('../app/components/results/results.component').then(m => m.ResultsComponent) },
   {path:'process',component: DocumentParserComponent},
   { path: '**', redirectTo: '' }
 ];

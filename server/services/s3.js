@@ -237,6 +237,7 @@ class S3Service {
   async readS3File(filename) {
   try {
     const decodedurl=decodeURIComponent(filename);
+
     console.log("Inside: ",decodedurl.split('/').slice(3).join('/'));
     const params = {
       Bucket: this.bucketName,
@@ -319,6 +320,92 @@ class S3Service {
 console.log(`message: Unsuccessful Upload`, err );
 }
   }
+  //store sections
+  async storeSections(sections,fileurl){
+    try{
+      const decodedUrl = decodeURIComponent(fileurl);
+      const match=decodedUrl.match(/amazonaws\.com\/([^?]+)/);
+      const folderpathmatch = match ? match[1] : null;
+      const folderpath=folderpathmatch.substring(0, folderpathmatch.lastIndexOf('/'))
+      const filename =folderpathmatch.split('/').pop().replace(/\.pdf$/, "");
+
+      const getParams = {
+        Bucket: this.bucketName,
+        Key: `${folderpath}/sections/${filename}.json`
+      };
+
+      let existingData = [];
+
+      try {
+        const data = await this.s3.getObject(getParams).promise();
+         existingData = JSON.parse(data.Body.toString());
+        
+      } catch (error) {
+          if (error.code === 'NoSuchKey') {
+          console.log("Key not found..");
+        } else {
+          throw error; // Other errors should still bubble up
+        }
+      }
+
+      // existingData = [existingData];
+      existingData.push(sections);
+
+      const params={
+        Bucket: this.bucketName,
+        Key: `${folderpath}/sections/${filename}.json`, // Unique filename
+        Body: JSON.stringify(existingData, null, 2),
+        ContentType: 'application/json'
+      }
+      const result = await this.s3.upload(params).promise();
+      console.log("RESULT: " ,result);
+      return result;
+    }catch(e){
+      console.log(`message: Unsuccessful Upload`, e );
+    }
+  }
+
+  async getCreatedSections(fileurl){
+    try{
+      const decodedUrl = decodeURIComponent(fileurl);
+      const match=decodedUrl.match(/amazonaws\.com\/([^?]+)/);
+      const folderpathmatch = match ? match[1] : null;
+      const folderpath=folderpathmatch.substring(0, folderpathmatch.lastIndexOf('/'))
+      const filename =folderpathmatch.split('/').pop().replace(/\.pdf$/, "");
+
+      const params= {
+      Bucket: this.bucketName,
+      Prefix: `${folderpath}/sections`,
+      MaxKeys:1
+    }
+    
+    const param ={
+      Bucket: this.bucketName,
+      Key: `${folderpath}/sections/${filename}.json`,
+    }
+    try{
+      
+      await this.s3.headObject(param).promise();
+        const resp = await this.s3.listObjectsV2(params).promise();
+         
+        if(resp.KeyCount){
+          console.log("Bucket Exists");
+          const response = await this.s3.getObject(param).promise();
+          const fileContent = response.Body.toString('utf-8');
+          console.log("Response: ", fileContent);
+          return fileContent;
+        }
+        else{
+          return false;
+        }
+
+
+  }catch(e){
+    console.log(e);
+  }
+}catch(err){
+  console.log(err);
+  }}
 
   // async getResult(folderPath,fileName){
   //    const params = {

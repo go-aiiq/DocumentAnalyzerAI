@@ -1638,3 +1638,20 @@ iframe {
   background-color: #fff;
   min-height: 0; /* Important for flex children */
 }
+
+.outlined-button{
+  // background: transparent;
+  // border: 2px solid grey; /* or your desired color */
+  // color: grey;
+  // box-shadow: none;
+    border: 2px solid grey;   /* or another color */
+  background: transparent;  /* keeps it clean */
+  color: grey;
+  border-radius: 999px;     /* makes it pill-shaped */
+  padding: 0.5rem 1.5rem;   /* gives it width */
+  box-shadow: none; 
+}
+
+.outlined-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}

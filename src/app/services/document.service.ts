@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable, throwError, BehaviorSubject } from 'rxjs';
+import { Observable, throwError, BehaviorSubject, Subject } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { 
   UploadResponse, 
@@ -9,6 +9,7 @@ import {
   LandingAIResponse, 
   FolderResponse
 } from '../models/document.model';
+import { Section } from '../add-sections/add-sections.component';
 
 @Injectable({
   providedIn: 'root'
@@ -16,7 +17,8 @@ import {
 export class DocumentService {
   private baseUrl: string;
   private processingResultSubject = new BehaviorSubject<ProcessingResult | null>(null);
-
+  private refreshSectionsSubject = new Subject<void>();
+  refreshSections$ = this.refreshSectionsSubject.asObservable();
   constructor(private http: HttpClient) { 
     this.baseUrl = this.getBaseUrl();
     console.log('=== DocumentService Initialization ===');
@@ -100,6 +102,16 @@ getFiles(): Observable<any> {
       withCredentials: true
     }
   );
+}
+
+getResults(filePath: string) {
+  return this.http.post(`${this.getBaseUrl()}/getResults`, {
+    filename: filePath
+  })
+}
+
+submitResult(payload: any) {
+  return this.http.post(`${this.getBaseUrl()}/submit`, payload);
 }
 
 deleteFolder(folderName: string): Observable<any> {
@@ -234,5 +246,30 @@ deleteFolder(folderName: string): Observable<any> {
       { fileKey },
       { withCredentials: true }
     );
+  }
+
+
+  //get Available sections
+  getAvailableSections(){
+    return this.http.get<string[]>(`${this.baseUrl}/getSections`);
+  }
+
+  //addSections
+  addSection(section: any,fileurl:string) {    
+    const payload = {
+      section:section,
+      fileurl:fileurl
+    }
+    return this.http.post(`${this.baseUrl}/addSections`, payload);
+  }
+
+  getCreatedSections(fileurl:string){
+    return this.http.post(`${this.baseUrl}/getCreatedSections`,{
+      fileurl:fileurl
+    } );
+  }
+
+  triggerRefresh() {
+    this.refreshSectionsSubject.next();
   }
 }
