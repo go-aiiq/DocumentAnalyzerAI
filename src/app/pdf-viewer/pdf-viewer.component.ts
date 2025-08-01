@@ -1,7 +1,7 @@
 
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import * as pdfjsLib from 'pdfjs-dist';
-import { AddSectionsComponent } from "../add-sections/add-sections.component";
+import { AddSectionsComponent, Section } from "../add-sections/add-sections.component";
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from "@angular/material/input";
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -12,6 +12,7 @@ import { SelectedPagesService } from '../services/selected-pages.service';
 import { MatList, MatListModule } from "@angular/material/list";
 import { MatIconModule } from "@angular/material/icon";
 import { MatButtonModule } from '@angular/material/button';
+import { range } from 'rxjs';
 
 
 @Component({
@@ -36,6 +37,7 @@ export class PdfViewerComponent implements OnInit {
  }
  ngOnInit(){
   this.documentService.refreshSections$.subscribe(() => {
+    this.selectedPages=[]
     this.getCreatedSections(); 
   });
  }
@@ -137,5 +139,12 @@ export class PdfViewerComponent implements OnInit {
   };
   deleteSection(){
 
+  }
+
+  onSectionSelect(section: Section) {
+    this.selectedPages = []
+    range(section.startPage-1, section.endPage-section.startPage+1).subscribe(selectedPageNumber => 
+      this.selectedPages.push(selectedPageNumber)
+    )
   }
 }

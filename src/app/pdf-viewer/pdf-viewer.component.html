@@ -2,15 +2,15 @@
 <div class = "main-layout">
 
 <div class="left-panel">
-<app-add-sections [selectedPages]="selectedPages" [selectedFile]="selectedFile"></app-add-sections>
-<mat-form-field appearance="fill" class="dropdown-button">
-  <mat-label>Select a file</mat-label>
- <mat-select (selectionChange)="onFileSelected($event)">
-  <mat-option *ngFor="let file of selectedFolder" [value]="file" style=" background-color: #ffffff; border-radius: 4px;">
-    {{ getFileName(file.key) }}
-  </mat-option>
-</mat-select>
-</mat-form-field>
+  <mat-form-field class="dropdown-button" appearance="fill" subscriptSizing="dynamic">
+    <mat-label>Select a file</mat-label>
+   <mat-select (selectionChange)="onFileSelected($event)">
+    <mat-option *ngFor="let file of selectedFolder" [value]="file" style=" background-color: #ffffff; border-radius: 4px;">
+      {{ getFileName(file.key) }}
+    </mat-option>
+  </mat-select>
+  </mat-form-field>
+  <app-add-sections [selectedPages]="selectedPages" [selectedFile]="selectedFile"></app-add-sections>
 </div>
 
 
@@ -46,7 +46,7 @@
   </h3>
 <mat-list *ngIf="selectedFile ; else noFileSelected">
   <mat-list-item *ngFor="let section of createdSections" class="transparent-card">
-     <div class="card-content">
+     <div (click)="onSectionSelect(section)" class="card-content">
       <h4>{{ section.title }}</h4>
       <p>Pages {{ section.startPage }} - {{ section.endPage }}</p>
     </div>

@@ -146,6 +146,7 @@ export class AddSectionsComponent implements OnInit,OnChanges {
       console.log("SelectedFile: ",this.selectedFile);
       // console.log('Section Created: ',this.newSection);
       this.documentService.addSection(this.newSection,this.selectedFile).subscribe(res=>{
+        this.resetForm()
         console.log("Section created: ",this.newSection);
         console.log(res);
         this.snackBar.open('Section added successfully!', 'Close', {
@@ -156,6 +157,14 @@ export class AddSectionsComponent implements OnInit,OnChanges {
       });
       
       this.documentService.triggerRefresh()
+    }
+  }
+
+  resetForm(){
+    this.newSection = {
+      startPage: 0,
+      endPage: 0,
+      title: ''
     }
   }
 
