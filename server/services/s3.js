@@ -365,19 +365,30 @@ console.log(`message: Unsuccessful Upload`, err );
     }
   }
 
-  async getCreatedSections(fileurl){
-    try{
-      const decodedUrl = decodeURIComponent(fileurl);
-      const match=decodedUrl.match(/amazonaws\.com\/([^?]+)/);
-      const folderpathmatch = match ? match[1] : null;
-      const folderpath=folderpathmatch.substring(0, folderpathmatch.lastIndexOf('/'))
-      const filename =folderpathmatch.split('/').pop().replace(/\.pdf$/, "");
+  async getCreatedSections(fileurl) {
+    try {
+      if (!fileurl) {
+        console.error('File URL is required');
+        return [];
+      }
 
-      const params= {
-      Bucket: this.bucketName,
-      Prefix: `${folderpath}/sections`,
-      MaxKeys:1
-    }
+      const decodedUrl = decodeURIComponent(fileurl);
+      const match = decodedUrl.match(/amazonaws\.com\/([^?]+)/);
+      
+      if (!match || !match[1]) {
+        console.error('Invalid S3 URL format');
+        return [];
+      }
+      
+      const folderpathmatch = match[1];
+      const folderpath = folderpathmatch.substring(0, folderpathmatch.lastIndexOf('/'));
+      const filename = folderpathmatch.split('/').pop()?.replace(/\.pdf$/, "") || '';
+
+      const params = {
+        Bucket: this.bucketName,
+        Prefix: `${folderpath}/sections`,
+        MaxKeys: 1
+      }
     
     const param ={
       Bucket: this.bucketName,

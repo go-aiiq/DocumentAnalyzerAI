@@ -99,13 +99,19 @@ router.post('/delete', async (req, res) => {
 
     console.log(`Deleting file: ${fileKey} for user: ${userId}`);
 
-    const params = {
-      Bucket: "taai-uploaded-documents", // Change to your bucket name
-      Key: fileKey
-    };
+    // Create new path with 'extractedData'
+    const extractedDataPathErrorFile = fileKey.replace(/(.*\/)([^/]+)(\.\w+)$/, '$1extractedData/$2.error');
+    console.log('Deleting files from extractedData:', extractedDataPathErrorFile);
+
+    const extractedDataPathJsonFile = fileKey.replace(/(.*\/)([^/]+)(\.\w+)$/, '$1extractedData/$2.json');
+    console.log('Deleting files from extractedData:', extractedDataPathJsonFile);
 
     const resp = await s3Service.deleteFile(fileKey);
     console.log("resp ", resp);
+    const resp_extractedData = await s3Service.deleteFile(extractedDataPathErrorFile);
+    console.log("resp_extractedData ", resp_extractedData);
+    const resp_extractedDataJson = await s3Service.deleteFile(extractedDataPathJsonFile);
+    console.log("resp_extractedDataJson ", resp_extractedDataJson);
     res.json({
       success: true,
       message: `File ${fileKey} deleted successfully.`
@@ -221,7 +227,6 @@ async function processDocument(fileUrl, originalFilename, userId, projectName) {
       data: result
     });
 
-    console.log('Document processed successfully');
     return { success: true, result };
 
   } catch (error) {
