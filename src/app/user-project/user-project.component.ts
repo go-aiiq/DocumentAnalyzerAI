@@ -195,6 +195,7 @@ export class UserProjectComponent {
     // Only refresh files if not selecting the dashboard
     if (folder !== 'Project') {
       this.refreshFiles();
+      
     }
   }
 

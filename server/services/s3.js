@@ -349,7 +349,11 @@ console.log(`message: Unsuccessful Upload`, err );
       }
 
       // existingData = [existingData];
-      existingData.push(sections);
+      let index = existingData.findIndex(existing => sections.title===existing.title && sections.startPage===existing.startPage && sections.endPage===existing.endPage)
+      if(index<0){
+        existingData.push(sections);
+      }
+      
 
       const params={
         Bucket: this.bucketName,
@@ -645,6 +649,62 @@ const isEqual = (a, b) => {
     const jsonArray = JSON.parse(fileContent);
     const updatedArray = jsonArray.filter(obj => !isEqual(obj, section));
 
+    // Write updated array back to S3
+    const putCommand = {
+      Bucket: this.bucketName,
+      Key: fileKey,
+      Body: JSON.stringify(updatedArray, null, 2),
+      ContentType: "application/json",
+    };
+    const r = await this.s3.putObject(putCommand).promise();
+    return r;
+  }
+
+    catch(e){
+      console.log(e);
+    }
+   
+}
+
+
+  async updateSection(fileurl,section){
+    
+    try{
+
+
+//Deep isEqual cehck
+const isEqual = (a, b) => {
+  return JSON.stringify(a) === JSON.stringify(b);
+};
+
+    // Get the file
+      const decodedUrl = decodeURIComponent(fileurl);
+      console.log("fileurl: ",fileurl);
+      console.log("decodedUrl: ",decodedUrl)
+      const match=decodedUrl.match(/amazonaws\.com\/([^?]+)/);
+      const folderpathmatch = match ? match[1] : null;
+      const folderpath=folderpathmatch.substring(0, folderpathmatch.lastIndexOf('/'))
+      const filename =folderpathmatch.split('/').pop().replace(/\.pdf$/, "");
+      const fileKey= `${folderpath}/sections/${filename}.json`
+      
+    const getCommand = {
+      Bucket: this.bucketName,
+      Key: fileKey,
+    };
+    const response = await this.s3.getObject(getCommand).promise();
+    const fileContent = response.Body.toString('utf-8');
+
+    //Parse
+    const jsonArray = JSON.parse(fileContent);
+    const updatedArray = jsonArray.map(obj => ( obj.title === section.title)?section:obj);
+    console.log("UpdatedArray: ",updatedArray);
+    const exists = jsonArray.some(obj =>
+      obj.title === section.title ||
+      (obj.startPage === section.startPage && obj.endPage === section.endPage)
+    );
+    if (!exists) {
+      updatedArray.push(section);
+    }
     // Write updated array back to S3
     const putCommand = {
       Bucket: this.bucketName,

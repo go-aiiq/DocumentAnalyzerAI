@@ -1,5 +1,5 @@
 
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output,OnChanges, SimpleChanges } from '@angular/core';
 import * as pdfjsLib from 'pdfjs-dist';
 import { AddSectionsComponent, Section } from "../add-sections/add-sections.component";
 import { CommonModule } from '@angular/common';
@@ -23,7 +23,7 @@ import { MatCardModule } from '@angular/material/card';
   styleUrl: './pdf-viewer.component.scss'
 })
 
-export class PdfViewerComponent implements OnInit {
+export class PdfViewerComponent implements OnInit ,OnChanges{
 
   @Input() selectedFolder!: any[] ;
   pdfDoc: any;
@@ -44,6 +44,15 @@ export class PdfViewerComponent implements OnInit {
     this.selectedPages=[]
     this.getCreatedSections(); 
   });
+ }
+
+ ngOnChanges(changes: SimpleChanges):void{
+if(changes['selectedFolder'] ){
+      this.selectedFile=null;
+      this.pageImages=[];
+      this.createdSections=[];
+      this.selectedPages=[];
+    }
  }
 
   async onFileSelected(event: MatSelectChange) {
@@ -94,7 +103,8 @@ export class PdfViewerComponent implements OnInit {
  
     for (let i = 1; i <= this.pdfDoc.numPages; i++) {
       const page = await this.pdfDoc.getPage(i);
-      const viewport = page.getViewport({ scale: 0.3 });
+      const scale = Math.min(5, window.devicePixelRatio * 2); 
+      const viewport = page.getViewport({ scale });
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d')!;
       canvas.height = viewport.height;
@@ -114,6 +124,7 @@ export class PdfViewerComponent implements OnInit {
       for (let i = start; i <= end; i++) this.selectedPages.push(i);
     } else {
       if (this.selectedPages.includes(index)) {
+  
         // this.selectedPages.delete(index);
         const removeIndex = this.selectedPages.indexOf(index);
         if (removeIndex > -1) {
@@ -158,11 +169,16 @@ export class PdfViewerComponent implements OnInit {
   }
 
   onSectionSelect(section: Section) {
+    
     this.selectedPages = []
     this.selectedSection=section
     // console.log(this.selectedSection);
     range(section.startPage-1, section.endPage-section.startPage+1).subscribe(selectedPageNumber => 
       this.selectedPages.push(selectedPageNumber)
     )
+  const pageElement = document.getElementById(`page-${section.startPage-1}`);
+  if (pageElement) {
+    pageElement.scrollIntoView({ behavior: 'smooth' });
+  }
   }
 }

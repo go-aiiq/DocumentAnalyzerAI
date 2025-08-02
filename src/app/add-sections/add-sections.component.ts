@@ -33,6 +33,7 @@ export class AddSectionsComponent implements OnInit,OnChanges {
   @Input() selectedPages!: number[];
   @Input() selectedFile!:string;
   @Input() selectedSection!: Section;
+  @Input() selectedFolder!:any;
   createdSections:any[]=[];
   // private _selectedPages: Set<number> = new Set();
   // @Input()
@@ -53,6 +54,7 @@ export class AddSectionsComponent implements OnInit,OnChanges {
   newSection:Section={title:'',startPage:1, endPage:1};
   startPage:number=0;
   endPage:number=0;
+  enableEdit:boolean=false;
 
   constructor(private documentService:DocumentService, private selectedPagesService: SelectedPagesService,private snackBar: MatSnackBar){
 
@@ -65,6 +67,7 @@ export class AddSectionsComponent implements OnInit,OnChanges {
       this.addPages(pages);
     })
     this.getCreatedSections();
+    console.log("enableEdit: ",this.enableEdit);
     
     
   }
@@ -76,7 +79,12 @@ export class AddSectionsComponent implements OnInit,OnChanges {
     }
     if(changes['selectedSection'] && this.selectedSection){
       this.newSection=this.selectedSection
+      this.enableEdit=true;      
     }
+    if(changes['selectedFolder']){
+      this.resetForm();
+    }
+    console.log("enableEdit inside onChanges: ",this.enableEdit);
   }
 
   get sortedPages(): number[] {
@@ -102,8 +110,19 @@ export class AddSectionsComponent implements OnInit,OnChanges {
         this.newSection.startPage = 0;
         this.newSection.endPage = 0;
       }
+      
     // }
     console.log('selectedPages ',this.selectedPages);
+  }
+
+  updateSection(){
+      this.documentService.updateSection(this.selectedFile,this.newSection).subscribe((res:any)=>{
+        console.log("FromUpdateSection: ", res);
+        this.documentService.triggerRefresh();
+      })
+      this.resetForm();
+      this.enableEdit=false;
+      this.selectedPages=[];
   }
 
   // addSection(){
@@ -185,6 +204,8 @@ export class AddSectionsComponent implements OnInit,OnChanges {
   deleteSection(index:number){
 
   };
+
+  
   isValidRange(section: Section): boolean {
     if (section.startPage > section.endPage) return false;
     return !this.sections.some(s =>

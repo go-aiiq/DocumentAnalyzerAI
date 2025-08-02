@@ -280,4 +280,10 @@ deleteFolder(folderName: string): Observable<any> {
       section:section
     });
   }
+  updateSection(filename:string,section :Section){
+    return this.http.post(`${this.baseUrl}/updateSection`,{
+      filename:filename,
+      section:section
+    })
+  }
 }

@@ -76,6 +76,15 @@ button:hover {
   background-color:#4f4f4f ;
 }
 
+button:disabled{
+  background: #a2a0a0 ;
+  cursor:no-drop;
+}
+
+.mat-select-disabled .mat-select-value{
+  color:#a2a0a0;
+}
+
 // ul {
 //   list-style: none;
 //   padding: 0;

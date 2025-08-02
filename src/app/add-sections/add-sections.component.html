@@ -5,7 +5,7 @@
   <!-- Section Dropdown -->
   <mat-form-field>
     <mat-label>Sections</mat-label>
-    <mat-select [(ngModel)]="newSection.title"  >
+    <mat-select [(ngModel)]="newSection.title" [disabled]="enableEdit" >
       <mat-option value="" disabled style=" background-color: #ffffff; border-radius: 4px;">Select a section</mat-option>
       <mat-option *ngFor="let title of availableSections" [value]="title" style=" background-color: #ffffff; border-radius: 4px;">
         {{ title }}
@@ -17,22 +17,29 @@
    Start Page
   <mat-form-field appearance="fill" class="full-width">
     <mat-label>Start Page</mat-label>
-    <input matInput type="number" [(ngModel)]="newSection.startPage" />
+    <input matInput type="number" min="0" [(ngModel)]="newSection.startPage" />
   </mat-form-field>
 
   End Page 
   <mat-form-field appearance="fill" class="full-width">
     <mat-label>End Page</mat-label>
-    <input matInput type="number" [(ngModel)]="newSection.endPage" />
+    <input matInput type="number" min="0" [(ngModel)]="newSection.endPage" />
   </mat-form-field>
 
   <!-- Add Button -->
   <button
     mat-raised-button
     color="primary"
-    (click)="addSection()"
+    (click)="addSection()" [disabled]="enableEdit"
   >
     Add Section
+  </button>
+    <button
+    mat-raised-button
+    color="primary"
+    (click)="updateSection()" [disabled]="!enableEdit"
+  >
+    Edit Section
   </button>
 </div>
 

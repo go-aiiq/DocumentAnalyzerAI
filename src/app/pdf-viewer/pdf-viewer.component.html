@@ -10,7 +10,7 @@
     </mat-option>
   </mat-select>
   </mat-form-field>
-  <app-add-sections [selectedSection]="selectedSection" [selectedPages]="selectedPages" [selectedFile]="selectedFile"></app-add-sections>
+  <app-add-sections [selectedSection]="selectedSection" [selectedPages]="selectedPages" [selectedFile]="selectedFile" [selectedFolder]="selectedFolder"></app-add-sections>
 </div>
 
 
@@ -25,7 +25,7 @@
     Loading...
   </ng-template> -->
   <!-- <ng-template *ngIf="!pdfDownloading"> -->
-    <div *ngFor="let img of pageImages; index as i"
+    <div *ngFor="let img of pageImages; index as i" [id]="'page-' + i"
         class="thumbnail"
         [class.selected]="selectedPages.includes(i)"
         (click)="toggleSelection(i, $event)">

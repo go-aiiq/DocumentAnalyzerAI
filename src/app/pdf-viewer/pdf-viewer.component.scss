@@ -173,7 +173,9 @@
 .pdf-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  // gap: 20px;
+  padding:5px;
+  margin-left:-15px;
 }
 
 // .thumbnail {
@@ -205,13 +207,14 @@
 }
 
 .thumbnail {
-  width: 200px;
-  height: 300px;
+  width: 446px;
+  height: 600px;
   border: 2px solid transparent;
   cursor: pointer;
   position: relative;
   box-sizing: border-box;
   flex: 0 0 auto; /* prevents shrinking */
+  margin-bottom: 1px;
 }
 
 .thumbnail.selected {
@@ -296,7 +299,7 @@
 }
 
 .sticky-header {
-  position: sticky;
+  // position: sticky;
   top: 0;
   max-height: 44px;
   background: #ffffff;
@@ -304,4 +307,5 @@
   z-index: 10;
   border-bottom: 1px solid #ccc;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  
 }

@@ -630,7 +630,22 @@ router.post('/deleteSection',async(req,res)=>{
     console.log(e)
   }
 }
+)
 
+router.post('/updateSection',async(req,res)=>{
+  try{
+    const section = req.body.section;
+    const filename = req.body.filename;
+    console.log("filename:",filename);
+    console.log("section: ",section);
+    const response = await s3Service.updateSection(filename,section);
+    console.log(response);
+    res.json(response);    
+  }
+catch(e){
+  console.log(e);
+}
+}
 )
 
 module.exports = router;
