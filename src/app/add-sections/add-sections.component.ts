@@ -118,6 +118,12 @@ export class AddSectionsComponent implements OnInit,OnChanges {
   updateSection(){
       this.documentService.updateSection(this.selectedFile,this.newSection).subscribe((res:any)=>{
         console.log("FromUpdateSection: ", res);
+        this.snackBar.open('Edited Section Details!', 'Close', {
+        panelClass:['success-snackbar'],  
+        duration: 3000,
+        horizontalPosition: 'center',
+        verticalPosition: 'bottom'
+      });
         this.documentService.triggerRefresh();
       })
       this.resetForm();
@@ -173,6 +179,7 @@ export class AddSectionsComponent implements OnInit,OnChanges {
         console.log("Section created: ",this.newSection);
         console.log(res);
         this.snackBar.open('Section added successfully!', 'Close', {
+        panelClass:['success-snackbar'],  
         duration: 3000,
         horizontalPosition: 'center',
         verticalPosition: 'bottom'

@@ -52,11 +52,11 @@
   </div>
 </div>
 <mat-list *ngIf="selectedFile ; else noFileSelected">
-  <mat-list-item *ngFor="let section of createdSections" class="transparent-card">
+  <mat-list-item *ngFor="let section of createdSections"  class="transparent-card">
      <div class="section">
-      <h4 (click)="onSectionSelect(section)">{{ section.title }}</h4>
+      <h5 (click)="onSectionSelect(section)"  >{{ section.title }}</h5>
       <div class="section-details">
-        <p (click)="onSectionSelect(section)">Pages {{ section.startPage }} - {{ section.endPage }}</p>
+        <p style="font-size: 13px;"(click)="onSectionSelect(section)">Pages {{ section.startPage }} - {{ section.endPage }}</p>
         <button mat-icon-button color="warn" class="delete-button" (click)="deleteSection(section)">
           <mat-icon>delete</mat-icon>
         </button>
