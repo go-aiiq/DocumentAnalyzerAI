@@ -93,4 +93,9 @@ export class ResultsComponent implements OnInit {
     })
   }
 
+  resetFormData(): void {
+    for (const key of Object.keys(this.formData)) {
+      this.formData[key] = '';
+    }
+  }
 }
