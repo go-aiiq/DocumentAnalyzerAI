@@ -24,11 +24,9 @@ import { RouterModule } from '@angular/router';
 // App components
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { UploadComponent } from './components/upload/upload.component';
 @NgModule({
   declarations: [
     AppComponent,
-    UploadComponent,
     // ConfirmDialogComponent is a standalone component and doesn't need to be declared here
   ],
   imports: [

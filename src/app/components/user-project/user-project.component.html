@@ -60,11 +60,9 @@
           <div style="display: flex; align-items: center; justify-content: space-between;">
           
           <h3>Files in "{{ selectedFolder }}"</h3> 
-          <!-- <div style="display: flex; justify-content: flex-end;"> -->
           <button mat-raised-button class="outlined-button" (click)="scrollToTarget()">
           <mat-icon>arrow_downward</mat-icon> Scroll to Section
           </button>
-          <!-- </div> -->
           </div>         
         </ng-container>
         <ng-template #dashboardView>
@@ -178,72 +176,8 @@
         <h3>Select a project or create a new one to get started</h3>
       </div>
     </ng-template>
-    <!-- <app-add-sections></app-add-sections> -->
      <div *ngIf="selectedFolder" [attr.data-key]="refreshKey" #targetDiv> 
      <app-pdf-viewer *ngIf="selectedFolder !== 'Project'" [selectedFolder]="processedFolders[selectedFolder]"></app-pdf-viewer>
      </div>
   </main>
 </div>
-
-
-<!-- Add Section -->
-
-
-
-
-<!-- <div class="dual-view-container" #dataPanel>
-  <div class="viewer-panel">
-
-    <div class="pdf-frame">
-      <ng-container *ngIf="loading; else showPdf">
-        <div class="loader">
-          <mat-spinner diameter="40"></mat-spinner>
-        </div>
-      </ng-container>
-
-      <ng-template #showPdf>
-        <iframe *ngIf="currentPdf"
-                [src]="currentPdf"
-                width="100%" height="100%"
-                style="border: none;">
-        </iframe>
-        <p *ngIf="!currentPdf" class="empty-message">Select and process a document to view it</p>
-      </ng-template>
-    </div>
-  </div>
-
- <div class="data-panel">
-  <ng-container *ngIf="dataLoading; else showForm">
-    <div class="loader-container">
-      <mat-spinner diameter="40"></mat-spinner>
-      <p class="loading-text">Extracting data from document...</p>
-    </div>
-  </ng-container>
-
-  <ng-template #showForm>
-    <ng-container *ngIf="extractedData">
-      <h3>Extracted Data</h3>
-      <mat-divider></mat-divider>
-
-      <form>
-        <ng-container *ngFor="let key of extractedKeys()">
-          <mat-form-field appearance="fill" class="field">
-            <mat-label>{{ formatLabel(key) }}</mat-label>
-            <textarea matInput [(ngModel)]="formData[key]" rows="2" name="{{key}}"></textarea>
-          </mat-form-field>
-        </ng-container>
-
-        <div class="actions">
-          <button mat-stroked-button color="primary" (click)="formData = {}">
-            Reset Changes
-          </button>
-          <button mat-raised-button color="primary" (click)="handleSubmit(originalFileUrl)">
-            Save Changes
-          </button>
-          
-        </div>
-      </form>
-    </ng-container>
-  </ng-template>
-</div>
-</div> -->

@@ -1,6 +1,4 @@
-<!-- <div style="display: grid; grid-template-columns: 250px 1fr;"> -->
 <div class = "main-layout">
-
 <div class="left-panel">
   <mat-form-field class="dropdown-button" appearance="fill" subscriptSizing="dynamic">
     <mat-label>Select a file</mat-label>
@@ -21,18 +19,13 @@
   <p *ngIf="selectedFile" ><strong>Document:</strong> {{getFileName(selectedFile).split('?')[0]}}</p>
   
 <div class="pdf-grid" >
-  <!-- <ng-template ngIf="pdfDownloading">
-    Loading...
-  </ng-template> -->
-  <!-- <ng-template *ngIf="!pdfDownloading"> -->
-    <div *ngFor="let img of pageImages; index as i" [id]="'page-' + i"
-        class="thumbnail"
-        [class.selected]="selectedPages.includes(i)"
-        (click)="toggleSelection(i, $event)">
-      <img [src]="img" />
-      <span class="page-number">Page {{ i + 1 }}</span>
-    </div>
-  <!-- </ng-template> -->
+  <div *ngFor="let img of pageImages; index as i" [id]="'page-' + i"
+      class="thumbnail"
+      [class.selected]="selectedPages.includes(i)"
+      (click)="toggleSelection(i, $event)">
+    <img [src]="img" />
+    <span class="page-number">Page {{ i + 1 }}</span>
+  </div>
   <mat-progress-spinner *ngIf="isRendering" diameter="50"></mat-progress-spinner>
 </div>
 </div>
@@ -52,9 +45,9 @@
   </div>
 </div>
 <mat-list *ngIf="selectedFile ; else noFileSelected">
-  <mat-list-item *ngFor="let section of createdSections"  class="transparent-card">
+  <mat-list-item *ngFor="let section of createdSections" class="transparent-card">
      <div class="section">
-      <h5 (click)="onSectionSelect(section)"  >{{ section.title }}</h5>
+      <h5 (click)="onSectionSelect(section)">{{ section.title }}</h5>
       <div class="section-details">
         <p style="font-size: 13px;"(click)="onSectionSelect(section)">Pages {{ section.startPage }} - {{ section.endPage }}</p>
         <button mat-icon-button color="warn" class="delete-button" (click)="deleteSection(section)">

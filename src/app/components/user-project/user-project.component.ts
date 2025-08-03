@@ -1,16 +1,14 @@
 // Angular core
-import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-// import { CommonModule } from '@angular/common';
-import { HttpClientModule, HttpErrorResponse, HttpEventType,HttpClient  } from '@angular/common/http';
+import { ChangeDetectorRef, Component, ElementRef, ViewChild } from '@angular/core';
+import { HttpEventType,HttpClient  } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-// import { HttpClient } from '@angular/common/http';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 // Angular Material
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatDialog, MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -23,9 +21,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 // App components and services
 import { CreateProjectDialogComponent } from '../create-project-dialog/create-project-dialog.component';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
-import { DocumentService } from '../services/document.service';
-import { FileSizePipe } from '../pipes/file-size.pipe';
-import { AddSectionsComponent } from "../add-sections/add-sections.component";
+import { DocumentService } from '../../services/document.service';
+import { FileSizePipe } from '../../pipes/file-size.pipe';
 import { PdfViewerComponent } from '../pdf-viewer/pdf-viewer.component';
 import { CommonModule } from '@angular/common';
 
@@ -34,7 +31,6 @@ import { CommonModule } from '@angular/common';
   selector: 'app-user-project',
   standalone: true,
   imports: [
-    
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,
@@ -51,9 +47,6 @@ import { CommonModule } from '@angular/common';
     FileSizePipe,
     PdfViewerComponent,
     CommonModule
-    
-    
-    
 ],
   templateUrl: './user-project.component.html',
   styleUrl: './user-project.component.scss'
@@ -137,7 +130,6 @@ export class UserProjectComponent {
         if (res && res.response) {
           this.folders = res.response;
           this.folderNames = Object.keys(this.folders);
-          console.log(this.processFiles());
         } else {
           console.warn('No folders available');
           this.folders = {};
@@ -167,7 +159,6 @@ export class UserProjectComponent {
         let fileName = baseKeyWithPdf.substring(lastSlashIndex + 1);
         fileName = fileName.replace(/\.pdf$/i, "");
         const extractedDataPath = `${pathBeforeFile}/extractedData/${fileName}`;
-        console.log(extractedDataPath)
 
         return {
           ...pdfFile,
@@ -177,7 +168,6 @@ export class UserProjectComponent {
         };
       });
     }
-    console.log(this.processedFolders)
     
   }
 
@@ -274,7 +264,6 @@ export class UserProjectComponent {
     this.dialog.open(CreateProjectDialogComponent).afterClosed().subscribe(data => {
       if (data) {
         this.documentService.projectNameInput(data).subscribe(resp => {
-          console.log("Response: ", resp);
           this.refreshFiles();
           this.selectedFolder = data;
         });
@@ -318,8 +307,6 @@ export class UserProjectComponent {
         } else {
           console.error("File URL is undefined or null.");
         }
-        // this.handleProcessDocument(fileUrl);      
-
       } catch (err: any) {
         console.error('Upload error:', err);
         this.error = err.message || 'File upload failed';
@@ -327,7 +314,6 @@ export class UserProjectComponent {
         this.dataLoading = false;
       }
     }
-
   }
 
 
@@ -398,8 +384,6 @@ export class UserProjectComponent {
       formData.append('file', this.selectedFile);
       formData.append('folderName', this.selectedFolder);
 
-      console.log('Uploading file to folder:', this.selectedFolder);
-
       // Show loading state
       this.loading = true;
       this.uploadProgress = 0;
@@ -407,37 +391,20 @@ export class UserProjectComponent {
       this.documentService.upload(formData).subscribe({
         next: (event: any) => {
           // Handle upload progress
-          // console.log("event",event);
           if (event.type === HttpEventType.UploadProgress) {
             this.uploadProgress = Math.round(100 * event.loaded / (event.total || 1));
-            // console.log("this.uploadProgress: ",event.type === HttpEventType.Response);
           } 
           else if (event.type === HttpEventType.Response) {
             // Upload complete
             this.snackBar.open('File uploaded successfully', 'Close', { duration: 3000 });
             this.refreshFiles();
             this.processButtonEnabled=true;
-            console.log("this.processButtonEnabled: ",this.processButtonEnabled);
-            // this.selectedFile = null;
-            // this.selectedFilename = '';
-            // if (this.fileInput) {
-            //   this.fileInput.nativeElement.value = '';
-            // }
             this.uploadProgress = 0;
-
-            // const fileUrl = event.body.fileUrl || event.body.url;
-            // if (!fileUrl) {
-            //   reject('No file URL returned by server');
-            // } else {
-            //   resolve(fileUrl);
-            // }
             this.selectedFile = null;
             this.selectedFilename = '';
             if (this.fileInput) {
               this.fileInput.nativeElement.value = '';
             }}
-          
-          
         },
         error: (err) => {
           console.error('Upload failed:', err);
@@ -447,10 +414,8 @@ export class UserProjectComponent {
         },
         complete: () => {
           this.loading = false;
-          
         }
       });
-
     })
   }
 
@@ -469,14 +434,12 @@ export class UserProjectComponent {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache'
         },
-        // body: filename
       });
 
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
       const safeBlobUrl = this.sanitizer.bypassSecurityTrustResourceUrl(blobUrl);
 
-      console.log('Viewing PDF:', pdfUrl);
       this.currentPdf = safeBlobUrl;
       this.viewerOpen = true;
     } catch (err: any) {
@@ -496,26 +459,6 @@ export class UserProjectComponent {
   formatLabel(key: string): string {
     return key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim();
   }
-  // handleSubmit(fileUrl: any): void {
-  //   console.log("Storing extractedData ..");
-  //   console.log("FileURL ", fileUrl)
-  //   const payload = {
-  //     fileurl: fileUrl, // or any custom name
-  //     data: this.formData
-  //   };
-    
-  //   this.http.post(`${this.getBaseUrl()}/submit`, payload).subscribe({
-  //     next: res => {
-  //       console.log('Response received:', res);
-  //       // this.success = 'Form submitted!'; 
-  //       this.snackBar.open('Changes saved successfully!', 'Close', {
-  //         duration: 3000,
-  //         verticalPosition: 'bottom'
-  //       });
-  //     },
-  //     error: err => this.error = 'Submission failed'
-  //   });
-  // }
 
   createFormFromJson(json: Record<string, any>): FormGroup {
     const formControls = Object.keys(json).reduce((acc, key) => {
@@ -525,10 +468,10 @@ export class UserProjectComponent {
     // console.log(this.fb.group(formControls))
     return this.fb.group(formControls);
   }
+
   scrollToDataPanel() {
     this.dataPanel.nativeElement.scrollIntoView({ behavior: 'smooth' })
   }
-
 
   viewResults(filePath: any) {
     const urlTree = this.router.createUrlTree(['/results'], {
@@ -536,30 +479,19 @@ export class UserProjectComponent {
     })
     const fullUrl = this.router.serializeUrl(urlTree);
     window.open(fullUrl, '_blank');
-    // this.documentService.getResults(filePath).subscribe(res => {
-    //   const newTab = window.open('/results', '_blank');
-    //   newTab?.addEventListener('load', () => {
-    //     newTab?.postMessage(JSON.stringify({ res: res, filePath: filePath }), window.location.origin);
-    //   });
-    //   this.datares = res;
-    //   this.extractedDataFulldata = JSON.parse(this.datares);
-    //   this.extractedData = this.extractedDataFulldata.data;
-    //   this.showFormView = true;
-    //   this.formData = { ...this.extractedData }
-    //   this.handleViewDocument(filePath)
-    // })
   }
+
   scrollToTarget() {
     if (this.targetViewer) {
     this.targetViewer.nativeElement.scrollIntoView({ behavior: 'smooth',block: 'start' });
   }}
 
   processDocument(filePath:string){
-      const key = filePath; // Or however you identify the file
-  this.processingMap[key] = true;
-  this.viewEnabledMap[key]=false;
+    const key = filePath; 
+    this.processingMap[key] = true;
+    this.viewEnabledMap[key]=false;
      
-     this.documentService.requestDocumentProcessing(filePath).subscribe((event:any)=>{
+    this.documentService.requestDocumentProcessing(filePath).subscribe((event:any)=>{
 
           if (event.type === HttpEventType.UploadProgress) {
             this.processProgress= Math.round(100 * event.loaded / (event.total || 1));

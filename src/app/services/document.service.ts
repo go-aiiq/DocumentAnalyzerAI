@@ -9,7 +9,7 @@ import {
   LandingAIResponse, 
   FolderResponse
 } from '../models/document.model';
-import { Section } from '../add-sections/add-sections.component';
+import { Section } from '../components/add-sections/add-sections.component';
 
 @Injectable({
   providedIn: 'root'

@@ -1,12 +1,6 @@
 <div class="dual-view-container" #dataPanel>
   <div class="viewer-panel">
     <div class="pdf-frame">
-      <!-- <ng-container *ngIf="loading; else showPdf">
-        <div class="loader">
-          <mat-spinner diameter="40"></mat-spinner>
-        </div>
-      </ng-container> -->
-
       <div style="min-height: 100%;">
         <iframe *ngIf="currentPdf"
                 [src]="currentPdf"
@@ -19,13 +13,6 @@
   </div>
 
  <div class="data-panel">
-  <!-- <ng-container *ngIf="dataLoading; else showForm">
-    <div class="loader-container">
-      <mat-spinner diameter="40"></mat-spinner>
-      <p class="loading-text">Extracting data from document...</p>
-    </div>
-  </ng-container> -->
-
   <div>
     <ng-container *ngIf="extractedData">
       <h3>Extracted Data</h3>
