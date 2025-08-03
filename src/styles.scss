@@ -181,13 +181,26 @@ body {
 .mat-raised-button,
 .mat-stroked-button,
 .mat-flat-button,
-.mat-icon-button,
 .mat-fab,
 .mat-mini-fab {
   color: #e2e0e0 !important;       // Text color
   border-color: #4e4d4d !important; // For stroked buttons
   background-color: #000 !important; // For raised/flat buttons
 }
+
+// .mat-icon{
+//     color: #e2e0e0 !important;       // Text color
+//   border-color: #4e4d4d !important; // For stroked buttons
+//   background-color: #000 !important; // For raised/flat buttons
+
+// }
+.mat-progress-spinner circle {
+  stroke: #0b0b0b !important; /* Your custom color */
+}
+.mat-mdc-progress-spinner circle {
+  stroke: #0b0b0b !important;
+}
+
 
 // Optional: Ensure icon color inside buttons is black
 .mat-button .mat-icon,
@@ -200,5 +213,8 @@ body {
   background-color: #000;
   color: #fff;
 }
+
+
+
 
 

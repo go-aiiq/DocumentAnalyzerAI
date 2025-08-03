@@ -123,16 +123,28 @@
                 </div>
 
                 <div class="file-actions">
-                  <ng-container *ngIf="file.isProcessing">
-                    <mat-progress-spinner diameter="20" matTooltip="Processing..."></mat-progress-spinner>
+                  <ng-container >
+                    
+                  
+                  <span matTooltip="Processing..." matTooltipPosition="below">
+                    <mat-spinner *ngIf="processingMap[file.url]" diameter="25"></mat-spinner>
+                  </span>
+                  <button mat-icon-button
+                          matTooltip="Process"
+                          matTooltipPosition="below"
+                          [disabled]="processingMap[file.url]"
+                          (click)="processDocument(file.url)">
+                    <mat-icon>sync</mat-icon>
+                  </button>
                   </ng-container>
+                  
 
                   <ng-container *ngIf="file.hasError && !file.isProcessing">
                     <mat-icon color="warn" matTooltip="Error processing file">error</mat-icon>
                   </ng-container>
 
-                  <ng-container *ngIf="file.hasJson && !file.isProcessing">
-                    <button mat-icon-button matTooltip="View" matTooltipPosition="below" (click)="viewResults(file.url)">
+                  <ng-container *ngIf="file.hasJson || viewEnabledMap[file.url]">
+                    <button mat-icon-button matTooltip="View" matTooltipPosition="below" (click)="viewResults(file.url)" [disabled]="processingMap[file.url]">
                       <mat-icon>visibility</mat-icon>
                     </button>
                   </ng-container>

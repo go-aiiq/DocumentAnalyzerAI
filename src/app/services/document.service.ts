@@ -110,8 +110,11 @@ getResults(filePath: string) {
   })
 }
 
-submitResult(payload: any) {
-  return this.http.post(`${this.getBaseUrl()}/submit`, payload);
+submitResult(fileUrl:string,formData:any) {
+  return this.http.post(`${this.getBaseUrl()}/submit`,{
+    fileurl:fileUrl,
+    data:formData
+  });
 }
 
 deleteFolder(folderName: string): Observable<any> {
@@ -204,19 +207,23 @@ deleteFolder(folderName: string): Observable<any> {
     }
   }
 
-  async requestDocumentProcessing(fileUrl: string): Promise<ProcessingResult> {
+  requestDocumentProcessing(fileUrl: string): Observable<any> {
     try {
       // Send HTTP request to backend API - actual processing happens in backend LandingAI service
-      const response = await this.http.post<ProcessingResult>(
+      const response = this.http.post<ProcessingResult>(
         `${this.baseUrl}/process`,
-        { fileUrl }
-      ).toPromise();
+        { fileUrl:fileUrl},
+        {
+          reportProgress: true,
+          observe: 'events'
+         }
+      );
       console.log("Processing response:", response);
       if (!response) {
         throw new Error('Processing request failed');
       }
-
       return response;
+      
     } catch (error) {
       console.error('Processing error:', error);
       throw error;

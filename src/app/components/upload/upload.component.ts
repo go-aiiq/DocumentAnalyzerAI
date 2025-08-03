@@ -152,33 +152,33 @@ export class UploadComponent implements OnInit {
     }
   }
 
-  async processDocument(): Promise<void> {
-    if (!this.uploadedFileUrl) {
-      this.snackBar.open('Please upload a file first', 'Close', { duration: 3000 });
-      return;
-    }
+  // async processDocument(): Promise<void> {
+  //   if (!this.uploadedFileUrl) {
+  //     this.snackBar.open('Please upload a file first', 'Close', { duration: 3000 });
+  //     return;
+  //   }
 
-    this.isProcessing = true;
+  //   this.isProcessing = true;
 
-    try {
-      console.log('Frontend: Starting document processing for:', this.uploadedFileUrl);
-      const result = await this.documentService.requestDocumentProcessing(this.uploadedFileUrl);
+  //   try {
+  //     console.log('Frontend: Starting document processing for:', this.uploadedFileUrl);
+  //     const result = await this.documentService.requestDocumentProcessing(this.uploadedFileUrl);
       
-      console.log('Frontend: Processing completed! Result:', result);
-      console.log('Frontend: Document ID:', result.documentId);
-      console.log('Frontend: Segments count:', result.segments?.length || 0);
+  //     console.log('Frontend: Processing completed! Result:', result);
+  //     console.log('Frontend: Document ID:', result.documentId);
+  //     console.log('Frontend: Segments count:', result.segments?.length || 0);
       
-      // Store the result and navigate to results page
-      this.documentService.setProcessingResult(result);
-      console.log('Frontend: Navigating to results page...');
-      this.router.navigate(['/results']);
-    } catch (error) {
-      console.error('Processing failed:', error);
-      this.snackBar.open('Document processing failed. Please try again.', 'Close', { duration: 3000 });
-    } finally {
-      this.isProcessing = false;
-    }
-  }
+  //     // Store the result and navigate to results page
+  //     this.documentService.setProcessingResult(result);
+  //     console.log('Frontend: Navigating to results page...');
+  //     this.router.navigate(['/results']);
+  //   } catch (error) {
+  //     console.error('Processing failed:', error);
+  //     this.snackBar.open('Document processing failed. Please try again.', 'Close', { duration: 3000 });
+  //   } finally {
+  //     this.isProcessing = false;
+  //   }
+  // }
 
   getFileSize(bytes: number): string {
     if (bytes === 0) return '0 Bytes';

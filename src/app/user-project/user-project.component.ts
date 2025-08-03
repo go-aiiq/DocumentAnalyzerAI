@@ -92,7 +92,11 @@ export class UserProjectComponent {
   datares: any = null;
   baseurl!:string;
   refreshKey = 0;
-
+  processButtonEnabled:boolean=false;
+  enableViewResults:boolean=false;
+  processProgress:number=0;
+  processingMap: { [key: string]: boolean } = {};
+  viewEnabledMap: { [key: string]: boolean } = {};
   // Constants
   readonly Object = Object;
 
@@ -133,7 +137,7 @@ export class UserProjectComponent {
         if (res && res.response) {
           this.folders = res.response;
           this.folderNames = Object.keys(this.folders);
-          this.processFiles();
+          console.log(this.processFiles());
         } else {
           console.warn('No folders available');
           this.folders = {};
@@ -174,6 +178,7 @@ export class UserProjectComponent {
       });
     }
     console.log(this.processedFolders)
+    
   }
 
   containsFiles(): boolean {
@@ -194,8 +199,7 @@ export class UserProjectComponent {
     this.refreshKey++;
     // Only refresh files if not selecting the dashboard
     if (folder !== 'Project') {
-      this.refreshFiles();
-      
+      this.refreshFiles();      
     }
   }
 
@@ -279,12 +283,7 @@ export class UserProjectComponent {
     }
     );
   }
-  openDocument() {
-
-  }
-  downloadDocument() {
-
-  }
+  
   refreshFiles(): void {
     this.documentService.getFiles().subscribe(res => {
       if (res?.response) {
@@ -408,12 +407,17 @@ export class UserProjectComponent {
       this.documentService.upload(formData).subscribe({
         next: (event: any) => {
           // Handle upload progress
+          // console.log("event",event);
           if (event.type === HttpEventType.UploadProgress) {
             this.uploadProgress = Math.round(100 * event.loaded / (event.total || 1));
-          } else if (event.type === HttpEventType.Response) {
+            // console.log("this.uploadProgress: ",event.type === HttpEventType.Response);
+          } 
+          else if (event.type === HttpEventType.Response) {
             // Upload complete
             this.snackBar.open('File uploaded successfully', 'Close', { duration: 3000 });
             this.refreshFiles();
+            this.processButtonEnabled=true;
+            console.log("this.processButtonEnabled: ",this.processButtonEnabled);
             // this.selectedFile = null;
             // this.selectedFilename = '';
             // if (this.fileInput) {
@@ -421,18 +425,19 @@ export class UserProjectComponent {
             // }
             this.uploadProgress = 0;
 
-            const fileUrl = event.body.fileUrl || event.body.url;
-            if (!fileUrl) {
-              reject('No file URL returned by server');
-            } else {
-              resolve(fileUrl);
-            }
+            // const fileUrl = event.body.fileUrl || event.body.url;
+            // if (!fileUrl) {
+            //   reject('No file URL returned by server');
+            // } else {
+            //   resolve(fileUrl);
+            // }
             this.selectedFile = null;
             this.selectedFilename = '';
             if (this.fileInput) {
               this.fileInput.nativeElement.value = '';
-            }
-          }
+            }}
+          
+          
         },
         error: (err) => {
           console.error('Upload failed:', err);
@@ -442,6 +447,7 @@ export class UserProjectComponent {
         },
         complete: () => {
           this.loading = false;
+          
         }
       });
 
@@ -547,4 +553,33 @@ export class UserProjectComponent {
     if (this.targetViewer) {
     this.targetViewer.nativeElement.scrollIntoView({ behavior: 'smooth',block: 'start' });
   }}
+
+  processDocument(filePath:string){
+      const key = filePath; // Or however you identify the file
+  this.processingMap[key] = true;
+  this.viewEnabledMap[key]=false;
+     
+     this.documentService.requestDocumentProcessing(filePath).subscribe((event:any)=>{
+
+          if (event.type === HttpEventType.UploadProgress) {
+            this.processProgress= Math.round(100 * event.loaded / (event.total || 1));
+            
+          } 
+          else if (event.type === HttpEventType.Response) {
+            this.processProgress=100;
+            this.snackBar.open('File Processed Successfully', 'Close', { duration: 3000 });
+            this.processButtonEnabled = true;
+           this.processingMap[key] = false;
+        
+            
+          }
+          error: () => {
+      this.snackBar.open('Upload failed', 'Close', { duration: 3000 });
+      this.processingMap[key] = false;
+    }
+      
+      this.viewEnabledMap[key]=true;
+      
+    })
+  }
 }

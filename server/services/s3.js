@@ -305,6 +305,7 @@ class S3Service {
  
   async storeResults(folderPath,fileName,jsonString){
     try{
+      // console.log("result: ",JSON.stringify(jsonString));
       // const userId = req.cookie()
       const params = {
     Bucket: this.bucketName,
@@ -312,9 +313,16 @@ class S3Service {
     Body: jsonString,
     ContentType: 'application/json'
   };
+  const param={
+    Bucket: this.bucketName,
+    Key: `${folderPath}extractedData/${fileName}.json`,
+  }
    const result = await this.s3.upload(params).promise();
   //  console.log(`message: Upload successful, ${result.Location} `);
-  return result;
+  // return result.Body;
+  const response = await this.s3.getObject(param).promise();
+  return response.Body.toString('utf-8');
+
   
 }catch(err){
 console.log(`message: Unsuccessful Upload`, err );
@@ -347,12 +355,16 @@ console.log(`message: Unsuccessful Upload`, err );
           throw error; // Other errors should still bubble up
         }
       }
+      
 
       // existingData = [existingData];
       let index = existingData.findIndex(existing => sections.title===existing.title && sections.startPage===existing.startPage && sections.endPage===existing.endPage)
       if(index<0){
         existingData.push(sections);
       }
+      
+      
+      
       
 
       const params={

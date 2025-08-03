@@ -83,30 +83,41 @@ export class ResultsComponent implements OnInit {
     return Object.keys(this.extractedData || {}).filter(k => k !== 'status' && typeof this.extractedData[k] !== 'object');
   }
 
-  handleSubmit(fileUrl: any): void {
+  handleSubmit(): void {
     console.log("Storing extractedData ..");
-    console.log("FileURL ", fileUrl)
-    const payload = {
-      fileurl: fileUrl, // or any custom name
-      data: this.formData
-    };
+   
+    // const payload = {
+    //   fileurl: fileUrl, // or any custom name
+    //   data: this.formData
+    // };
+    this.route.queryParams.subscribe((params:any) => {
+      this.filePath=params.filePath
+    })
     
-    this.documentService.submitResult(payload).subscribe({
-      next: res => {
+    this.documentService.submitResult(this.filePath,this.formData).subscribe({
+      next: (res:any) => {
+        console.log("this.formData: ",this.formData);
         console.log('Response received:', res);
         this.snackBar.open('Changes saved successfully!', 'Close', {
           duration: 3000,
           verticalPosition: 'bottom'
         });
-      },
+        console.log("res: ",typeof(res));
+        // if()
+        this.extractedData=JSON.parse(res);
+        this.formData = { ...this.extractedData };
+      }
       // error: err => this.error = 'Submission failed'
     });
   }
 
   viewResults(filePath: any) {
     this.documentService.getResults(filePath).subscribe((res: any) => {
+      console.log("res inside view: ",res);
       let extractedDataFulldata = JSON.parse(res);
-      this.extractedData = extractedDataFulldata.data;
+      console.log("type of res ",typeof(res));
+      this.extractedData=extractedDataFulldata;
+      console.log("extractedData",this.extractedData);
       this.formData = { ...this.extractedData }
       this.handleViewDocument(filePath)
     })
