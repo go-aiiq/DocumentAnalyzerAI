@@ -1,9 +1,17 @@
+export interface FileUploadResult {
+  success: boolean;
+  filename: string;
+  url?: string;
+  error?: string;
+  size?: number;
+  uploadTime?: string;
+}
+
 export interface UploadResponse {
   success: boolean;
-  fileUrl: string;
-  fileName: string;
-  fileSize: number;
-  uploadTime: string;
+  message?: string;
+  progress?: number;
+  results?: FileUploadResult[];
 }
 
 export interface DocumentSegment {

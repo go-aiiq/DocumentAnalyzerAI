@@ -1,13 +1,14 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable, throwError, BehaviorSubject, Subject } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { HttpClient, HttpEvent, HttpEventType, HttpHeaders, HttpParams, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError, BehaviorSubject, Subject, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { 
   UploadResponse, 
   ProcessingResult, 
   DocumentSegment,
   LandingAIResponse, 
-  FolderResponse
+  FolderResponse,
+  FileUploadResult
 } from '../models/document.model';
 import { Section } from '../components/add-sections/add-sections.component';
 
@@ -143,67 +144,148 @@ deleteFolder(folderName: string): Observable<any> {
     );
   }
 
-  upload(formData: FormData): Observable<any> {
+  upload(formData: FormData): Observable<HttpEvent<UploadResponse>> {
     const uploadUrl = `${this.baseUrl}/upload`;
-    console.log('Uploading file to:', uploadUrl);
+    console.log('Uploading files to:', uploadUrl);
     
     // Log form data for debugging
-    for (let pair of (formData as any).entries()) {
-      console.log(pair[0] + ': ', pair[1]);
+    for (const [key, value] of (formData as any).entries()) {
+      if (value instanceof File) {
+        console.log(`${key}: ${value.name} (${value.size} bytes)`);
+      } else {
+        console.log(`${key}: ${value}`);
+      }
     }
     
-    return this.http.post(uploadUrl, formData, {
+    const options = {
       withCredentials: true,
       reportProgress: true,
-      observe: 'events'
-    });
+      observe: 'events' as const,
+      responseType: 'json' as const
+    };
+
+    return this.http.post<UploadResponse>(uploadUrl, formData, options).pipe(
+      catchError((error: any) => {
+        console.error('Upload error:', error);
+        if (error.error instanceof ErrorEvent) {
+          // Client-side error
+          console.error('Client-side error:', error.error.message);
+        } else {
+          // Server-side error
+          console.error(`Server returned code ${error.status}, error: ${error.statusText}`);
+        }
+        return throwError(() => new Error('An error occurred while uploading the file'));
+      })
+    );
   }
 
-  async uploadFile(file: File): Promise<UploadResponse> {
-    console.log('=== DocumentService.uploadFile() called ===');
+  async uploadFiles(files: File[], folderName?: string): Promise<UploadResponse> {
+    console.log('=== DocumentService.uploadFiles() called ===');
     console.log('Base URL:', this.baseUrl);
-    console.log('File:', file.name, file.size, 'bytes');
+    console.log('Files to upload:', files.map(f => `${f.name} (${f.size} bytes)`).join(', '));
     
     const formData = new FormData();
-    formData.append('file', file);
-
-    const uploadUrl = `${this.baseUrl}/upload`;
-    console.log('Full upload URL:', uploadUrl);
+    
+    // Add all files to FormData
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+    
+    // Add folder name if provided
+    if (folderName) {
+      formData.append('folderName', folderName);
+    }
 
     try {
       console.log('Sending HTTP POST request...');
-      const response = await this.http.post<UploadResponse>(
-        uploadUrl,
-        formData,
-        {
-          headers: {
-            'Accept': 'application/json'
+      const response = await new Promise<UploadResponse>((resolve, reject) => {
+        const subscription = this.http.post<UploadResponse>(
+          `${this.baseUrl}/upload`,
+          formData,
+          {
+            headers: {
+              'Accept': 'application/json'
+            },
+            withCredentials: true,
+            reportProgress: true,
+            observe: 'events'
+          }
+        ).pipe(
+          map(event => this.getEventMessage(event))
+        ).subscribe({
+          next: (result) => {
+            if (result.success) {
+              resolve(result);
+            } else if (result.progress !== undefined) {
+              // Handle progress updates
+              console.log(`Upload progress: ${result.progress}%`);
+            }
           },
-          withCredentials:true
-        }
-        
-      ).toPromise();
+          error: (error) => {
+            console.error('Upload error:', error);
+            reject(error);
+          },
+          complete: () => {
+            // This will be called after the observable completes
+            subscription.unsubscribe();
+          }
+        });
+      });
 
-      console.log('HTTP response received:', response);
-      
-      if (!response) {
-        console.error('Empty response from server');
-        throw new Error('Upload failed - empty response');
-      }
-
-      console.log('Upload successful:', response);
+      console.log('Upload completed with results:', response);
       return response;
-    } catch (error: any) {
-      console.error('=== Upload Error Details ===');
-      console.error('Error object:', error);
-      console.error('Error name:', error?.name);
-      console.error('Error message:', error?.message);
-      console.error('Error status:', error?.status);
-      console.error('Error code:', error?.code);
-      console.error('Error statusText:', error?.statusText);
-      console.error('Error url:', error?.url);
-      console.error('=== End Error Details ===');
-      throw error;
+    } catch (error: unknown) {
+      console.error('Error uploading files:', error);
+      
+      // Create error results for all files
+      const errorResults: FileUploadResult[] = files.map(file => ({
+        success: false,
+        filename: file.name,
+        error: 'Upload failed',
+        size: file.size
+      }));
+
+      // Format error response based on error type
+      let errorMessage = 'Upload failed';
+      
+      if (error instanceof HttpErrorResponse) {
+        // HTTP error
+        if (error.error instanceof ErrorEvent) {
+          // Client-side error
+          const clientError = error.error;
+          console.error('Client-side error:', clientError.message);
+          errorMessage = `Client error: ${clientError.message}`;
+          errorResults.forEach(r => r.error = clientError.message);
+        } else {
+          // Server-side error
+          const status = error.status || 0;
+          const statusText = error.statusText || 'Unknown server error';
+          const serverError = (error.error && typeof error.error === 'object' && 'message' in error.error) 
+            ? String(error.error.message) 
+            : statusText;
+          
+          console.error(`Server error: ${status} - ${statusText}`, error.error);
+          errorMessage = `Server error: ${status} - ${serverError}`;
+          errorResults.forEach(r => r.error = serverError);
+        }
+      } else if (error instanceof Error) {
+        // General error
+        console.error('Upload failed:', error.message);
+        errorMessage = error.message;
+        errorResults.forEach(r => r.error = error.message);
+      } else {
+        // Unknown error type
+        console.error('Unknown error during file upload');
+        errorMessage = 'An unknown error occurred during file upload';
+        errorResults.forEach(r => r.error = errorMessage);
+      }
+      
+      // Return the formatted error response
+      return {
+        success: false,
+        message: errorMessage,
+        results: errorResults
+      };
     }
   }
 
@@ -278,6 +360,72 @@ deleteFolder(folderName: string): Observable<any> {
 
   triggerRefresh() {
     this.refreshSectionsSubject.next();
+  }
+
+  /**
+   * Handle HTTP errors
+   */
+  private handleError(error: HttpErrorResponse) {
+    console.error('HTTP Error:', error);
+    
+    let errorMessage = 'An unknown error occurred';
+    if (error.error instanceof ErrorEvent) {
+      // Client-side error
+      errorMessage = `Error: ${error.error.message}`;
+    } else if (error.status) {
+      // Server-side error
+      errorMessage = `Server returned code ${error.status}, error: ${error.statusText}`;
+      
+      // Add more specific error messages based on status code
+      if (error.status === 401) {
+        errorMessage = 'You are not authorized to perform this action';
+      } else if (error.status === 403) {
+        errorMessage = 'You do not have permission to perform this action';
+      } else if (error.status === 404) {
+        errorMessage = 'The requested resource was not found';
+      } else if (error.status >= 500) {
+        errorMessage = 'A server error occurred. Please try again later.';
+      }
+      
+      // Try to get more detailed error message from response body
+      if (error.error && typeof error.error === 'object' && 'message' in error.error) {
+        errorMessage = error.error.message;
+      } else if (error.error) {
+        errorMessage = String(error.error);
+      }
+    }
+    
+    return throwError(() => new Error(errorMessage));
+  }
+  
+  /**
+   * Handle HTTP events during file upload
+   */
+  private getEventMessage(event: HttpEvent<UploadResponse>): UploadResponse {
+    switch (event.type) {
+      case HttpEventType.Sent:
+        console.log('Request sent');
+        return { success: false, message: 'Upload started' };
+        
+      case HttpEventType.UploadProgress:
+        // Progress is handled by the component
+        const percentDone = Math.round(100 * (event.loaded / (event.total || 1)));
+        console.log(`File upload progress: ${percentDone}%`);
+        return { 
+          success: false, 
+          message: 'Upload in progress',
+          progress: percentDone
+        };
+        
+      case HttpEventType.Response:
+        // The backend returned a successful response
+        console.log('Upload complete', event.body);
+        return event.body || { success: true, message: 'Upload completed successfully' };
+        
+      default:
+        console.log('Unknown event type:', event.type);
+        return { success: false, message: 'Upload in progress' };
+    }
   }
 
   deleteSection(filename:string,section:Section){

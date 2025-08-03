@@ -61,8 +61,8 @@ export class UserProjectComponent {
   processedFolders: { [folder: string]: any[] } = {};
   folderNames: string[] = [];
   selectedFolder: string = 'Property';
-  selectedFile: File | null = null;
-  selectedFilename: string = '';
+  selectedFiles: File[] = [];
+  uploadResults: Array<{file: File; success: boolean; message?: string; progress: number}> = [];
 
   // UI State
   loading: boolean = false;
@@ -95,6 +95,59 @@ export class UserProjectComponent {
 
   constructor(private fb: FormBuilder, private http: HttpClient, private documentService: DocumentService, private dialog: MatDialog, private router: Router, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar, private sanitizer: DomSanitizer) {
 
+  }
+
+  /**
+   * Format file size in a human-readable format
+   * @param bytes File size in bytes
+   * @param decimals Number of decimal places to show
+   * @returns Formatted file size string
+   */
+  getFileSize(bytes: number, decimals: number = 2): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  }
+
+  /**
+   * Delete a file with confirmation
+   * @param fileKey The key of the file to delete
+   */
+  deleteFile(fileKey: string): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '350px',
+      data: {
+        title: 'Confirm Delete',
+        message: 'Are you sure you want to delete this file? This action cannot be undone.',
+        confirmText: 'Delete',
+        cancelText: 'Cancel'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.documentService.deleteFile(fileKey).subscribe({
+          next: () => {
+            this.snackBar.open('File deleted successfully', 'Close', {
+              duration: 3000,
+              panelClass: ['success-snackbar']
+            });
+            // Refresh the file list
+            this.loadFolders();
+          },
+          error: (error) => {
+            console.error('Error deleting file:', error);
+            this.snackBar.open(`Error deleting file: ${error.message || 'Unknown error'}`, 'Close', {
+              duration: 5000,
+              panelClass: ['error-snackbar']
+            });
+          }
+        });
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -183,8 +236,8 @@ export class UserProjectComponent {
   selectFolder(folder: string): void {
     // Only update the selected folder without refreshing files
     this.selectedFolder = folder;
-    this.selectedFile = null;
-    this.selectedFilename = '';
+    this.selectedFiles = [];
+    this.uploadResults = [];
     
     this.refreshKey++;
     // Only refresh files if not selecting the dashboard
@@ -220,8 +273,8 @@ export class UserProjectComponent {
         // If the deleted folder was selected, reset to dashboard
         if (this.selectedFolder === folderName) {
           this.selectedFolder = 'Project';
-          this.selectedFile = null;
-          this.selectedFilename = '';
+          this.selectedFiles = [];
+          this.uploadResults = [];
         }
 
         // Reload the folders to reflect the deletion
@@ -287,136 +340,136 @@ export class UserProjectComponent {
       }
     });
   }
-  async onFileSelected(event: Event): Promise<void> {
-    const target = event.target as HTMLInputElement;
-    if (target.files && target.files.length > 0) {
-      this.selectedFile = target.files[0] || null;
-      this.selectedFilename = this.selectedFile.name;
-      this.originalFileUrl = this.selectedFilename;
-      this.loading = true;
-      this.dataLoading = true;
-      this.error = '';
-      this.success = '';
-      try {
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const files = Array.from(input.files);
+      this.uploadFiles(files);
+    }
+  }
 
-        const fileUrl = await this.uploadFile();
-        console.log("fileUrl", fileUrl);
-        if (fileUrl) {
-          // Backend will automatically process the document
-          //this.handleProcessDocument(fileUrl);
-        } else {
-          console.error("File URL is undefined or null.");
+  async uploadFiles(files: File[]): Promise<void> {
+    if (!files || files.length === 0) return;
+
+    this.loading = true;
+    
+    // Initialize upload results
+    this.uploadResults = files.map(file => ({
+      file,
+      success: false,
+      progress: 0,
+      message: 'Waiting to upload...'
+    }));
+    
+    // Track active subscriptions for cleanup
+    const subscriptions: { [key: number]: any } = {};
+    
+    try {
+      const folderName = this.selectedFolder === 'Project' ? undefined : this.selectedFolder;
+      
+      // Update progress for each file
+      const updateProgress = (index: number, progress: number, message?: string) => {
+        if (index >= 0 && index < this.uploadResults.length) {
+          this.uploadResults[index].progress = progress;
+          if (message) {
+            this.uploadResults[index].message = message;
+          }
+          this.cdr.detectChanges();
         }
-      } catch (err: any) {
-        console.error('Upload error:', err);
-        this.error = err.message || 'File upload failed';
-        this.loading = false;
-        this.dataLoading = false;
-      }
-    }
-  }
-
-
-  validateFile(): void {
-    if (!this.selectedFile) return;
-
-    // Check file type
-    if (this.selectedFile.type !== 'application/pdf') {
-      this.snackBar.open('Please select a PDF file', 'Close', { duration: 3000 });
-      // this.selectedFile = null;
-      return;
-    }
-
-    // Check file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (this.selectedFile.size > maxSize) {
-      this.snackBar.open('File size must be less than 10MB', 'Close', { duration: 3000 });
-      // this.selectedFile = null;
-      return;
-    }
-  }
-  getFileSize(bytes: number): string {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  }
-
-  /**
-   * Deletes a file from the selected folder
-   * @param fileKey - The key/path of the file to delete
-   */
-  deleteFile(fileKey: string): void {
-    if (!fileKey || !this.selectedFolder) return;
-
-    if (confirm('Are you sure you want to delete this file?')) {
-      this.documentService.deleteFile(fileKey).subscribe({
-        next: () => {
-          this.snackBar.open('File deleted successfully', 'Close', { duration: 3000 });
-          this.refreshFiles();
-        },
-        error: (err) => {
-          console.error('Error deleting file:', err);
-          this.snackBar.open('Failed to delete file', 'Close', { duration: 3000 });
+      };
+      
+      // Upload files in parallel
+      const uploadPromises = files.map((file, index) => {
+        const formData = new FormData();
+        formData.append('files', file);
+        if (folderName) {
+          formData.append('folderName', folderName);
+        }
+        
+        return new Promise<void>((resolve) => {
+          subscriptions[index] = this.documentService.upload(formData).subscribe({
+            next: (event) => {
+              try {
+                if (event.type === HttpEventType.UploadProgress) {
+                  // Calculate progress
+                  const progress = Math.min(99, Math.round(100 * (event.loaded / (event.total || 1))));
+                  updateProgress(index, progress, 'Uploading...');
+                } else if (event.type === HttpEventType.Response) {
+                  // Handle successful response
+                  const response = event.body;
+                  if (response?.success) {
+                    updateProgress(index, 100, 'Upload complete!');
+                    this.uploadResults[index].success = true;
+                    this.uploadResults[index].message = 'Upload successful';
+                    this.snackBar.open(`Successfully uploaded ${file.name}`, 'Close', {
+                      duration: 3000,
+                      panelClass: ['success-snackbar']
+                    });
+                    
+                    // Refresh the file list after a short delay to ensure the file is available
+                    setTimeout(() => {
+                      this.refreshFiles();
+                    }, 1000);
+                    
+                  } else {
+                    throw new Error(response?.message || 'Unknown error during upload');
+                  }
+                }
+              } catch (error: any) {
+                console.error(`Error processing upload for ${file.name}:`, error);
+                updateProgress(index, 100, `Error: ${error?.message || 'Upload failed'}`);
+              }
+            },
+            error: (error) => {
+              console.error(`Error uploading ${file.name}:`, error);
+              updateProgress(index, 100, `Error: ${error.message || 'Upload failed'}`);
+              this.uploadResults[index].success = false;
+              resolve();
+            },
+            complete: () => {
+              if (subscriptions[index]) {
+                subscriptions[index].unsubscribe();
+                delete subscriptions[index];
+              }
+              resolve();
+            }
+          });
+        });
+      });
+      
+      // Wait for all uploads to complete
+      await Promise.all(uploadPromises);
+      
+      // Final refresh to ensure all files are up to date
+      this.refreshFiles();
+      this.loading = false;
+      
+    } catch (error) {
+      console.error('Error during file uploads:', error);
+      this.snackBar.open('Error uploading one or more files', 'Close', {
+        duration: 5000,
+        panelClass: ['error-snackbar']
+      });
+    } finally {
+      // Clean up any remaining subscriptions
+      Object.values(subscriptions).forEach(sub => {
+        if (sub && !sub.closed) {
+          sub.unsubscribe();
         }
       });
+      
+      this.loading = false;
+      // Reset file input
+      if (this.fileInput) {
+        this.fileInput.nativeElement.value = '';
+      }
+      
+      // Auto-clear success messages after delay
+      setTimeout(() => {
+        this.uploadResults = this.uploadResults.filter(r => !r.success);
+        this.cdr.detectChanges();
+      }, 10000);
     }
-  }
-
-
-  uploadFile(): Promise<string> {
-    return new Promise((resolve, reject) => {
-      if (!this.selectedFile) {
-        this.snackBar.open('No file selected', 'Close', { duration: 3000 });
-        reject('No file selected');
-        return;
-      }
-
-      // Validate file type (PDF only)
-      if (this.selectedFile.type !== 'application/pdf') {
-        this.snackBar.open('Only PDF files are allowed', 'Close', { duration: 3000 });
-        reject('Invalid file type');
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append('file', this.selectedFile);
-      formData.append('folderName', this.selectedFolder);
-
-      // Show loading state
-      this.loading = true;
-      this.uploadProgress = 0;
-
-      this.documentService.upload(formData).subscribe({
-        next: (event: any) => {
-          // Handle upload progress
-          if (event.type === HttpEventType.UploadProgress) {
-            this.uploadProgress = Math.round(100 * event.loaded / (event.total || 1));
-          } 
-          else if (event.type === HttpEventType.Response) {
-            // Upload complete
-            this.snackBar.open('File uploaded successfully', 'Close', { duration: 3000 });
-            this.refreshFiles();
-            this.processButtonEnabled=true;
-            this.uploadProgress = 0;
-            this.selectedFile = null;
-            this.selectedFilename = '';
-            if (this.fileInput) {
-              this.fileInput.nativeElement.value = '';
-            }}
-        },
-        error: (err) => {
-          console.error('Upload failed:', err);
-          this.snackBar.open('Upload failed. Please try again.', 'Close', { duration: 5000 });
-          this.uploadProgress = 0;
-          this.loading = false;
-        },
-        complete: () => {
-          this.loading = false;
-        }
-      });
-    })
   }
 
 

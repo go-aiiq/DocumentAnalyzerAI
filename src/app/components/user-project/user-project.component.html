@@ -71,35 +71,39 @@
         <div class="upload-box" *ngIf="selectedFolder !== 'Project' && folderNames.length > 0">
           <div class="upload-options">
             <input type="file" #fileInput style="display: none" (change)="onFileSelected($event)" accept=".pdf" multiple>
-            <button mat-raised-button color="primary" (click)="fileInput.click()" [disabled]="uploadProgress > 0 && uploadProgress < 100">
+            <button mat-raised-button color="primary" (click)="fileInput.click()" [disabled]="loading">
               <mat-icon>cloud_upload</mat-icon>
-              {{ uploadProgress > 0 ? 'Uploading...' : 'Upload File' }}
+              {{ loading ? 'Uploading...' : 'Upload Files' }}
             </button>
             
-            <div class="file-info_upload" *ngIf="selectedFile" [class.uploading]="uploadProgress > 0">
-              <div class="file-header">
-                <mat-icon class="file-icon">description</mat-icon>
-                <div class="file-details">
-                  <span class="file-name" [title]="selectedFile.name">{{ selectedFile.name }}</span>
-                  <span class="file-size">{{ getFileSize(selectedFile.size) }}</span>
+            <!-- Upload results -->
+            <div class="upload-results" *ngIf="uploadResults.length > 0">
+              <div class="upload-result" *ngFor="let result of uploadResults">
+                <div class="file-header">
+                  <mat-icon class="file-icon" [class.success]="result.success" [class.error]="!result.success">
+                    {{ result.success ? 'check_circle' : 'error' }}
+                  </mat-icon>
+                  <div class="file-details">
+                    <span class="file-name" [title]="result.file.name">{{ result.file.name }}</span>
+                    <span class="file-size">{{ getFileSize(result.file.size) }}</span>
+                  </div>
                 </div>
-              </div>
-              
-              <div class="upload-progress" *ngIf="uploadProgress > 0">
-                <div class="progress-bar-container">
-                  <mat-progress-bar 
-                    mode="determinate" 
-                    [value]="uploadProgress"
-                    color="primary">
-                  </mat-progress-bar>
-                  <span class="progress-text">{{ uploadProgress | number:'1.0-0' }}%</span>
-                </div>
-                <div class="upload-status">
-                  <span *ngIf="uploadProgress < 100">Uploading...</span>
-                  <span *ngIf="uploadProgress === 100" class="upload-success">
-                    <mat-icon>check_circle</mat-icon>
-                    Upload complete
-                  </span>
+                
+                <div class="upload-progress">
+                  <div class="progress-bar-container">
+                    <mat-progress-bar 
+                      [mode]="result.progress < 100 ? 'determinate' : 'determinate'"
+                      [value]="result.progress"
+                      [color]="result.success ? 'primary' : 'warn'">
+                    </mat-progress-bar>
+                    <span class="progress-text" *ngIf="result.progress > 0">
+                      {{ result.progress | number:'1.0-0' }}%
+                    </span>
+                  </div>
+                  <div class="upload-status" [class.success]="result.success" [class.error]="!result.success">
+                    <span *ngIf="!result.success && !result.message">Uploading...</span>
+                    <span *ngIf="result.message">{{ result.message }}</span>
+                  </div>
                 </div>
               </div>
             </div>
