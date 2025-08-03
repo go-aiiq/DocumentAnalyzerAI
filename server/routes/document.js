@@ -244,58 +244,108 @@ async function processDocument(fileUrl, originalFilename, userId, projectName) {
 }
 
 // File upload endpoint
-router.post('/upload', uploadMiddleware.single('file'), async (req, res) => {
-  try {
-    const userId = req.cookies.user_Id;
-    const projName = req.body.folderName ? req.body.folderName : req.cookies.projectName;
+router.post('/upload', uploadMiddleware.array('files', 10), async (req, res) => {
+  const userId = req.cookies.user_Id;
+  const projName = req.body.folderName ? req.body.folderName : req.cookies.projectName;
 
-    console.log('Upload request received:', {
-      body: req.body,
-      file: req.file ? {
-        originalname: req.file.originalname,
-        mimetype: req.file.mimetype,
-        size: req.file.size
-      } : 'No file received',
-      credentials: 'include'
+  console.log('Upload request received:', {
+    body: req.body,
+    fileCount: req.files ? req.files.length : 0,
+    credentials: 'include'
+  });
+
+  if (!req.files || req.files.length === 0) {
+    console.log('No files in request');
+    return res.status(400).json({
+      error: 'No files uploaded',
+      success: false
+    });
+  }
+
+  try {
+    const uploadPromises = req.files.map(async (file) => {
+      try {
+        // Validate file type
+        if (file.mimetype !== 'application/pdf') {
+          // Clean up uploaded file
+          fs.unlinkSync(file.path);
+          return {
+            success: false,
+            filename: file.originalname,
+            error: 'Only PDF files are allowed'
+          };
+        }
+
+        // Upload to S3
+        const fileUrl = await s3Service.uploadFile(file, userId, projName);
+        
+        // Clean up local file after upload
+        fs.unlinkSync(file.path);
+
+        // Validate the returned URL
+        if (!fileUrl || typeof fileUrl !== 'string') {
+          throw new Error('Invalid file URL returned from S3 upload');
+        }
+
+        // Basic URL validation
+        new URL(fileUrl);
+        
+        return {
+          success: true,
+          filename: file.originalname,
+          url: fileUrl
+        };
+      } catch (error) {
+        // Clean up file if it exists
+        if (file && file.path && fs.existsSync(file.path)) {
+          fs.unlinkSync(file.path);
+        }
+        return {
+          success: false,
+          filename: file.originalname,
+          error: error.message
+        };
+      }
     });
 
-    if (!req.file) {
-      console.log('No file in request');
-      return res.status(400).json({
-        error: 'No file uploaded',
-        success: false
-      });
-    }
-
-    // Validate file type
-    if (req.file.mimetype !== 'application/pdf') {
-      // Clean up uploaded file
-      fs.unlinkSync(req.file.path);
-      return res.status(400).json({
-        error: 'Only PDF files are allowed',
-        success: false
-      });
-    }
-
-    // Upload to S3
-    const fileUrl = await s3Service.uploadFile(req.file, userId, projName);
-
-    // Clean up local file after upload
-    fs.unlinkSync(req.file.path);
-
-    // Validate the returned URL
-    if (!fileUrl || typeof fileUrl !== 'string') {
-      throw new Error('Invalid file URL returned from S3 upload');
-    }
-
+    // Wait for all uploads to complete
+    const results = await Promise.all(uploadPromises);
     
-      // Basic URL validation
-      new URL(fileUrl);
-      res.status(200).json({ message: "Upload complete" });
+    // Check if all uploads failed
+    const allFailed = results.every(result => !result.success);
+    const someFailed = results.some(result => !result.success);
+    
+    if (allFailed) {
+      return res.status(400).json({
+        success: false,
+        message: 'All file uploads failed',
+        results: results
+      });
     }
-    catch (error) {
-      throw new Error(`Invalid file URL format: ${fileUrl}`);
-    }})
+    
+    res.status(200).json({
+      success: true,
+      message: someFailed ? 'Some files uploaded successfully' : 'All files uploaded successfully',
+      results: results
+    });
+  } catch (error) {
+    // Clean up any remaining files
+    if (req.files) {
+      req.files.forEach(file => {
+        if (file.path && fs.existsSync(file.path)) {
+          fs.unlinkSync(file.path);
+        }
+      });
+    }
+    
+    console.error('Upload error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Upload failed',
+      message: error.message
+    });
+  }
+});
 
   //   console.log(`Starting document processing for: ${req.file.originalname}`);
 
