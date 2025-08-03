@@ -490,11 +490,11 @@ class LandingAIService {
         },
         {
           type: 'footer',
-          content: `Analysis completed for "${fileName}" at ${new Date().toLocaleString()}. Enhanced diagnostic provided by TA AI Document Analyzer.`,
+          content: `Analysis completed for "${fileName}" at ${new Date().toLocaleString()}. Enhanced diagnostic provided by TC AI Document Analyzer.`,
           confidence: 0.90,
           boundingBox: { x: 50, y: 360, width: 500, height: 25 },
           metadata: { 
-            system: 'TA AI Document Analyzer',
+            system: 'TC AI Document Analyzer',
             fileName: fileName,
             timestamp: new Date().toISOString(),
             analysisType: 'document_specific'
@@ -565,11 +565,11 @@ class LandingAIService {
         {
           type: "footer",
           content:
-            "Document processing completed successfully. Enhanced diagnostic results provided by TA AI Document Analyzer.",
+            "Document processing completed successfully. Enhanced diagnostic results provided by TC AI Document Analyzer.",
           confidence: 0.9,
           boundingBox: { x: 50, y: 360, width: 500, height: 25 },
           metadata: {
-            system: "TA AI Document Analyzer",
+            system: "TC AI Document Analyzer",
             version: "1.0",
             timestamp: new Date().toISOString(),
           },

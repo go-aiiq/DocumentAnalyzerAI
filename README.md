@@ -1,4 +1,4 @@
-# TA AI Document Analyzer
+# TC AI Document Analyzer
 
 A full-stack document analysis application that uses AI to process and segment PDF documents. The application features a modern web interface with drag-and-drop file upload, S3 integration, and LandingAI-powered document processing.
 
@@ -208,7 +208,7 @@ cd server
 npm start
 
 # You should see:
-# "TA AI Document Analyzer API running on port 8000"
+# "TC AI Document Analyzer API running on port 8000"
 # "Health check: http://localhost:8000/health"
 ```
 
@@ -243,7 +243,7 @@ Create a startup script for convenience:
 cat > start-app.sh << 'EOF'
 #!/bin/bash
 
-echo "Starting TA AI Document Analyzer..."
+echo "Starting TC AI Document Analyzer..."
 
 # Function to cleanup on exit
 cleanup() {
@@ -316,7 +316,7 @@ After setup, verify everything is working:
 1. **Check Backend Health:**
    ```bash
    curl http://localhost:8000/health
-   # Expected: {"status":"healthy","timestamp":"...","service":"TA AI Document Analyzer API"}
+   # Expected: {"status":"healthy","timestamp":"...","service":"TC AI Document Analyzer API"}
    ```
 
 2. **Check Frontend Accessibility:**
@@ -333,8 +333,8 @@ After setup, verify everything is working:
 
 4. **Open Application in Browser:**
    - Navigate to `http://localhost:5000`
-   - Should see TA AI logo and upload interface
-   - Console should show: "TA AI Document Analyzer - Clean Version Loaded"
+   - Should see TC AI logo and upload interface
+   - Console should show: "TC AI Document Analyzer - Clean Version Loaded"
 
 ### Port Configuration
 
@@ -564,4 +564,4 @@ This project is licensed under the MIT License.
 
 ## Support
 
-For technical support or questions about the TA AI Document Analyzer, please refer to the project documentation or contact the development team.
+For technical support or questions about the TC AI Document Analyzer, please refer to the project documentation or contact the development team.

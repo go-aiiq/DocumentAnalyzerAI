@@ -104,7 +104,7 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'healthy', 
     timestamp: new Date().toISOString(),
-    service: 'TA AI Document Analyzer API'
+    service: 'TC AI Document Analyzer API'
   });
 });
 
@@ -235,7 +235,7 @@ app.use('*', (req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`TA AI Document Analyzer API running on port ${PORT}`);
+  console.log(`TC AI Document Analyzer API running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/health`);
 });
 

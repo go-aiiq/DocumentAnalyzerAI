@@ -7,10 +7,10 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'TA AI Document Analyzer';
+  title = 'TC AI Document Analyzer';
 
   ngOnInit() {
-    console.log('TA AI Document Analyzer loaded successfully!');
+    console.log('TC AI Document Analyzer loaded successfully!');
   }
 
   onLogout():void{

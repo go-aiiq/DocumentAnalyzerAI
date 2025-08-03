@@ -1,8 +1,8 @@
-# TA AI Document Analyzer
+# TC AI Document Analyzer
 
 ## Overview
 
-The TA AI Document Analyzer is a full-stack web application that allows users to upload PDF documents and analyze them using AI-powered document processing. The application consists of an Angular frontend and a Node.js Express backend, with integrated services for file storage (S3) and document processing (LandingAI).
+The TC AI Document Analyzer is a full-stack web application that allows users to upload PDF documents and analyze them using AI-powered document processing. The application consists of an Angular frontend and a Node.js Express backend, with integrated services for file storage (S3) and document processing (LandingAI).
 
 ## System Architecture
 
@@ -107,13 +107,13 @@ The TA AI Document Analyzer is a full-stack web application that allows users to
 ## Changelog
 
 - July 03, 2025. Initial setup
-- July 03, 2025. Completed full-stack TA AI Document Analyzer:
+- July 03, 2025. Completed full-stack TC AI Document Analyzer:
   - Built standalone HTML/JavaScript frontend (no Angular dependencies)
   - Created Node.js Express backend with document processing
   - Implemented S3 file upload simulation
   - Added LandingAI document analysis with segmentation
   - Deployed both servers (frontend port 5000, backend port 8000)
-  - Added gradient UI design with TA AI branding
+  - Added gradient UI design with TC AI branding
   - Implemented drag-and-drop PDF upload functionality
   - Created comprehensive README.md with setup instructions
   - Documented complete directory structure and API endpoints

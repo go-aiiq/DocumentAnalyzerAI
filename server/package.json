@@ -1,7 +1,7 @@
 {
   "name": "ta-ai-document-analyzer-server",
   "version": "1.0.0",
-  "description": "TA AI Document Analyzer Backend Server",
+  "description": "TC AI Document Analyzer Backend Server",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -15,7 +15,7 @@
     "s3",
     "landingai"
   ],
-  "author": "TA AI",
+  "author": "TC AI",
   "license": "MIT",
   "dependencies": {
     "aws-sdk": "^2.1692.0",
