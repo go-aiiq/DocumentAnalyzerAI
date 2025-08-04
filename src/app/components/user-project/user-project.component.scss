@@ -84,6 +84,13 @@
   }
 }
 
+.project-sidebar.collapsed {
+  width: 60px; /* or 0 if you want it hidden */
+  overflow-x: hidden;
+    align-items: center;
+  justify-content: center;
+}
+
 .sidebar-header {
   padding: 1.5rem 1.25rem 1rem;
   position: relative;
@@ -1767,11 +1774,7 @@ iframe {
 }
 
 .outlined-button{
-  // background: transparent;
-  // border: 2px solid grey; /* or your desired color */
-  // color: grey;
-  // box-shadow: none;
-    border: 2px solid grey;   /* or another color */
+  border: 2px solid grey;   /* or another color */
   background: transparent;  /* keeps it clean */
   color: grey;
   border-radius: 999px;     /* makes it pill-shaped */
@@ -1794,18 +1797,6 @@ button[mat-icon-button][disabled] mat-icon {
   color: rgba(126, 123, 123, 0.3); /* Dim the icon specifically */
 }
 
-
-// .mat-mdc-icon-button[_ngcontent-ng-c1320030390] .mdc-button__label[_ngcontent-ng-c1320030390], .mat-mdc-icon-button[_ngcontent-ng-c1320030390] .mat-icon[_ngcontent-ng-c1320030390] {
- 
-// }
-// button[mat-icon-button][matTooltip="Process"] {
-//   color: linear-gradient(45deg, #000000, #777777)!important;
-//   background-color: #f5f5f5;
-//   border-radius: 50%;
-//   padding: 8px;
-//   transition: background-color 0.3s ease;
-// }
-
 ::ng-deep button[mat-icon-button][matTooltip="Process"] .mat-icon,
 ::ng-deep button[mat-icon-button][matTooltip="Download"] .mat-icon,
 ::ng-deep button[mat-icon-button][matTooltip="View"] .mat-icon{
@@ -1826,6 +1817,48 @@ button[mat-icon-button][disabled] mat-icon {
   display: inline-block;
 }
 
-// :,
-// :ng-deep button[mat-icon-button][matTooltip="Process"] {
-//   color:linear-gradient(45deg, #000000, #777777) !important;}
+
+
+.toggle-btn {
+  color:white;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  // transition: left 0.1s ease;
+}
+
+.right {
+  left: 14rem;
+  right: auto;
+}
+
+.left {
+  left: 10px;
+  right: auto;
+}
+.spinner-wrapper {
+  position: relative;
+  display: inline-block;
+
+  .progress-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    // font-weight: bold;
+    font-size: 0.5rem;
+  }
+}
+
+.checkmark {
+  font-size: 24px;
+  color: green;
+  text-align: center;
+  line-height: 40px;
+  animation: fadeInOut 2s ease;
+}

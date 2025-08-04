@@ -1,8 +1,20 @@
 <div class="project-container">
   <!-- Sidebar -->
-  <aside class="project-sidebar">
+   <button 
+      mat-icon-button
+      (click)="toggleSidebar()"
+      aria-label="Toggle sidebar"
+      class="toggle-btn"
+      [ngClass]="{ 'left': isCollapsed, 'right': !isCollapsed }"
+      >
+        <mat-icon *ngIf="isCollapsed">menu</mat-icon>
+        <mat-icon *ngIf="!isCollapsed">arrow_circle_left</mat-icon>
+      </button>
+  <aside class="project-sidebar" [class.collapsed]="isCollapsed">
+     <ng-container *ngIf="!isCollapsed">
     <div class="sidebar-header">
       <h2>Property Hub</h2>
+      
       <button mat-raised-button class="create-btn" (click)="openCreateDialog()">
         <mat-icon>add</mat-icon> New Property
       </button>
@@ -49,6 +61,7 @@
         </button>
       </div>
     </mat-nav-list>
+    </ng-container>
   </aside>
 
   <!-- Main Content -->
@@ -129,7 +142,22 @@
                     
                   
                   <span matTooltip="Processing..." matTooltipPosition="below">
-                    <mat-spinner *ngIf="processingMap[file.url]" diameter="25"></mat-spinner>
+                    
+                     <div class="spinner-wrapper" *ngIf="processingMap[file.url]">
+                      <mat-spinner *ngIf="processingMap[file.url]" diameter="25"></mat-spinner>
+                     <div class="progress-label">{{ processProgress }}%</div>
+                     <!-- <mat-progress-spinner 
+                          mode="determinate"
+                          [value]="processProgress"
+                          color="primary"
+                          diameter="25"
+                          strokeWidth="3">
+                        </mat-progress-spinner>
+                        <div class="progress-label">{{ processProgress }}%</div> -->
+                         <!-- <div class="checkmark" *ngIf="showCheckmark">
+                            <span>  ✔️</span> -->
+                         <!-- </div>  -->
+                        </div>
                   </span>
                   <button mat-icon-button
                           matTooltip="Process"

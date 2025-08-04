@@ -46,7 +46,8 @@ import { CommonModule } from '@angular/common';
     MatTooltipModule,
     FileSizePipe,
     PdfViewerComponent,
-    CommonModule
+    CommonModule,
+    MatProgressSpinnerModule
 ],
   templateUrl: './user-project.component.html',
   styleUrl: './user-project.component.scss'
@@ -70,7 +71,10 @@ export class UserProjectComponent {
   viewerOpen: boolean = false;
   showFormView: boolean = false;
   uploadProgress: number = 0; // Tracks file upload progress (0-100)
-
+  isCollapsed:boolean = false;
+  progress:number=0;
+  showCheckmark = false;
+  waitingInterval!:any;
   // Data
   formData: Record<string, any> = {};
   extractedData: any = null;
@@ -541,30 +545,63 @@ export class UserProjectComponent {
 
   processDocument(filePath:string){
     const key = filePath; 
+    this.processProgress = 0;
     this.processingMap[key] = true;
     this.viewEnabledMap[key]=false;
      
     this.documentService.requestDocumentProcessing(filePath).subscribe((event:any)=>{
+          // this.startProgress();
 
           if (event.type === HttpEventType.UploadProgress) {
-            this.processProgress= Math.round(100 * event.loaded / (event.total || 1));
+            const actualProgress = Math.round(80 * event.loaded / (event.total || 1));
+            this.smoothProgressUpdate(actualProgress);
             
           } 
+          
           else if (event.type === HttpEventType.Response) {
-            this.processProgress=100;
-            this.snackBar.open('File Processed Successfully', 'Close', { duration: 3000 });
-            this.processButtonEnabled = true;
-           this.processingMap[key] = false;
-        
-            
+            if (event.body.success){
+              this.completeProgressTo100();
+              this.processingMap[key] = false;
+              this.snackBar.open('File Processed Successfully', 'Close', { duration: 3000 });
+              this.processButtonEnabled = true;
+              
+            }
+
           }
-          error: () => {
-      this.snackBar.open('Upload failed', 'Close', { duration: 3000 });
-      this.processingMap[key] = false;
-    }
-      
+          // else{
+          //   this.snackBar.open('Upload failed', 'Close', { duration: 3000 });
+          //   this.processingMap[key] = false;
+
+          // }
       this.viewEnabledMap[key]=true;
       
     })
   }
+
+  toggleSidebar() {
+    this.isCollapsed = !this.isCollapsed;
+  }
+
+  smoothProgressUpdate(targetProgress: number) {
+  const delay = 30;
+  const interval = setInterval(() => {
+  const remaining = targetProgress - this.processProgress;
+  const step = Math.max(1, Math.floor(remaining / 5)); // dynamic step
+  this.processProgress = Math.min(this.processProgress + step, targetProgress);
+
+  if (this.processProgress >= targetProgress) {
+    clearInterval(interval);
+  }
+}, delay);
+}
+
+completeProgressTo100() {
+  const interval = setInterval(() => {
+    if (this.processProgress < 100) {
+      this.processProgress += 1; // or adjust step for speed
+    } else {
+      clearInterval(interval);
+    }
+  }, ); // change delay for pace control
+}
 }

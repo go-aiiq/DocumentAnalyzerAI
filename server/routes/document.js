@@ -520,10 +520,19 @@ router.post('/process', async (req, res) => {
     console.log('Backend route: received result from LandingAI service');
     console.log('Backend route: result documentId:', result.documentId);
     console.log('Backend route: sending result to frontend...');
+    
     if(result){
-      uploadJson=await s3Service.storeResults(folderPath,filename,jsonString)
+      const uploadJson=await s3Service.storeResults(folderPath,filename,jsonString);
+      console.log("uploading results to s3: ",uploadJson);
     }
-    res.json(result);
+    res.status(200).json({
+      success:true,
+      results:result
+    });
+    
+    // res.json(result); 
+
+    
 
   } catch (error) {
     console.error('Processing error:', error);
