@@ -140,7 +140,7 @@ export class UserProjectComponent {
               panelClass: ['success-snackbar']
             });
             // Refresh the file list
-            this.loadFolders();
+             this.refreshFiles();
           },
           error: (error) => {
             console.error('Error deleting file:', error);
