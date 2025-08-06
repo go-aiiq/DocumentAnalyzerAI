@@ -721,4 +721,19 @@ catch(e){
 }
 )
 
+
+router.post('/downloadSection',async(req,res) => {
+  try {
+    const fileurl = req.body.fileurl;
+    const section = req.body.section;
+    const response = await s3Service.downloadSection(fileurl,section);
+    res.json(response);
+    console.log(response);
+  }
+  catch(e){
+    console.log("Error downloading section ",e);
+  }
+}
+)
+
 module.exports = router;

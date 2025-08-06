@@ -158,7 +158,7 @@
 .section{
   display: flex;
   flex-direction: column;
-  margin-top: 12px;
+  margin-top: 22px;
 }
 
 .section-details{
@@ -184,7 +184,7 @@
   flex-wrap: wrap;
   // gap: 20px;
   padding:5px;
-  margin-left:-15px;
+  margin-left:35px;
 }
 
 // .thumbnail {
@@ -262,7 +262,7 @@
 // }
 
 .delete-button {
-  bottom: 10px;
+  bottom: 18px;
   z-index: 1;
   width: 32px;
   height: 32px;
@@ -276,8 +276,23 @@
   border-radius:8px;
   transform: scale(1.2);
   
-  
+}
+.download-button {
+  bottom: 18px;
+  z-index: 7;
+  width: 14px;
+  height: 32px;
+  margin-left: 155px;
+}
+.download-button mat-icon {
+  font-size: 20px;
+}
 
+.download-button :hover{
+  
+  border-radius:8px;
+  transform: scale(1.2);
+  
 }
   
 .dropdown-button {

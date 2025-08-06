@@ -48,9 +48,13 @@
   <mat-list-item *ngFor="let section of createdSections" class="transparent-card">
      <div class="section">
       <h5 (click)="onSectionSelect(section)">{{ section.title }}</h5>
-      <div class="section-details">
+      
         <p style="font-size: 13px;"(click)="onSectionSelect(section)">Pages {{ section.startPage }} - {{ section.endPage }}</p>
-        <button mat-icon-button color="warn" class="delete-button" (click)="deleteSection(section)">
+        <div class="section-details">
+        <button mat-icon-button matTooltip="Download" matTooltipPosition="below"class="download-button" (click)="downloadSection(section)">
+          <mat-icon>download</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" matTooltip="Delete" matTooltipPosition="below"class="delete-button" (click)="deleteSection(section)">
           <mat-icon>delete</mat-icon>
         </button>
       </div>

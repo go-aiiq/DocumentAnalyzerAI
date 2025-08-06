@@ -14,6 +14,7 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatButtonModule } from '@angular/material/button';
 import { range } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-pdf-viewer',
@@ -35,7 +36,7 @@ export class PdfViewerComponent implements OnInit ,OnChanges{
   selectedSection!: Section;
   pdfDownloading: boolean = false;
 
- constructor(private documentService:DocumentService, private selectedPagesService: SelectedPagesService){
+ constructor(private documentService:DocumentService, private selectedPagesService: SelectedPagesService,private snackBar:MatSnackBar){
   pdfjsLib.GlobalWorkerOptions.workerSrc  = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
  }
  
@@ -127,6 +128,23 @@ export class PdfViewerComponent implements OnInit ,OnChanges{
         this.createdSections.splice(delIndex,1);
       }
     })
+  }
+
+  downloadSection(section:Section){
+    this.documentService.downloadSection(this.selectedFile,section).subscribe((res:any)=>{
+      const response =res;
+     
+      const link = document.createElement('a');
+      link.href = response.url;
+      const filename=response.sectionPDF;
+      link.download = filename;
+            document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      this.snackBar.open(`Downloaded ${section.title} Section`,"Close",{ duration: 3000 });
+    })
+
   }
 
   onSectionSelect(section: Section) {

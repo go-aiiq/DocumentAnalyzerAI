@@ -118,6 +118,8 @@ app.use((err, req, res, next) => {
 });
 
 
+
+
 app.get('/.well-known/pki-validation/:79ED671DF7306B75CF56DCB390005692.txt', (req, res) => {
   const filePath = path.join(__dirname, 'public','ta-ai-document-analyzer', '.well-known', 'pki-validation','79ED671DF7306B75CF56DCB390005692.txt' );
   if (fs.existsSync(filePath)) {
@@ -125,6 +127,13 @@ app.get('/.well-known/pki-validation/:79ED671DF7306B75CF56DCB390005692.txt', (re
   } else {
     res.status(404).send('File not found');
   }
+});
+
+app.get('/auth/check', (req, res) => {
+  const token = req.cookies.user_Id;
+  console.log("token: ",token);
+  if (!token) return res.status(401).send('Not authenticated');
+  res.send({ authenticated: true });
 });
 
 //Login Page

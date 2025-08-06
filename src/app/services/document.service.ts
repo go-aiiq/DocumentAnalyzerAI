@@ -441,4 +441,11 @@ deleteFolder(folderName: string): Observable<any> {
       section:section
     })
   }
+
+  downloadSection(fileurl:string,section:Section){
+    return this.http.post(`${this.baseUrl}/downloadSection`,{
+      fileurl:fileurl,
+      section:section
+    });
+  }
 }
