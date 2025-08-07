@@ -2,7 +2,6 @@ const AWS = require('aws-sdk');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const user = require('../server.js');
-const { PDFDocument } = require('pdf-lib');
 const fs = require('fs');
 const { execFile } = require('child_process');
 const muhammara =require('muhammara');

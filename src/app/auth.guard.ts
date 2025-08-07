@@ -9,7 +9,7 @@ export const authGuard: CanActivateFn = (route, state) => {
   const router = inject(Router);
   const isBeanstalk = window.location.hostname.includes('elasticbeanstalk');
   const baseUrl = isBeanstalk
-    ? 'http://documentanalyzer.eu-north-1.elasticbeanstalk.com'
+    ? 'https://documentanalyzer.eu-north-1.elasticbeanstalk.com'
     : 'http://localhost:8000';
   return http.get(`${baseUrl}/auth/check`, { withCredentials: true }).pipe(
     map(() => true), // Authenticated
@@ -18,4 +18,5 @@ export const authGuard: CanActivateFn = (route, state) => {
       return of(false);
     })
   );
+  
 };

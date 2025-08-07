@@ -207,8 +207,9 @@ export class UserProjectComponent {
     this.processedFolders = {};
     for (const folderName of this.folderNames) {
       const allFiles = this.folders[folderName] || [];
-      const pdfFiles = allFiles.filter(f => f.key.toLowerCase().endsWith('.pdf'));
-
+      const pdfFiles = allFiles.filter(f => !/sectionsPDFs?\//i.test(f.key) &&( f.key.toLowerCase().endsWith('.pdf')));
+      console.log(pdfFiles);
+      // const pdfFiles = allFiles.filter(f => !f.key.endsWith('/'))
       this.processedFolders[folderName] = pdfFiles.map(pdfFile => {
         const baseKeyWithPdf = pdfFile.key;
         const lastSlashIndex = baseKeyWithPdf.lastIndexOf("/");
