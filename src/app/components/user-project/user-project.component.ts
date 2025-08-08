@@ -25,6 +25,8 @@ import { DocumentService } from '../../services/document.service';
 import { FileSizePipe } from '../../pipes/file-size.pipe';
 import { PdfViewerComponent } from '../pdf-viewer/pdf-viewer.component';
 import { CommonModule } from '@angular/common';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { ResultsComponent } from "../results/results.component";
 
 
 @Component({
@@ -47,7 +49,9 @@ import { CommonModule } from '@angular/common';
     FileSizePipe,
     PdfViewerComponent,
     CommonModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatExpansionModule,
+    ResultsComponent
 ],
   templateUrl: './user-project.component.html',
   styleUrl: './user-project.component.scss'
@@ -56,6 +60,8 @@ export class UserProjectComponent {
   @ViewChild('dataPanel') dataPanel!: ElementRef;
   @ViewChild('fileInput') fileInput!: ElementRef;
   @ViewChild('targetDiv', { static: false }) targetViewer!: ElementRef;
+
+
 
   // State
   folders: { [folder: string]: any[] } = {};
@@ -97,7 +103,7 @@ export class UserProjectComponent {
   // Constants
   readonly Object = Object;
 
-  constructor(private fb: FormBuilder, private http: HttpClient, private documentService: DocumentService, private dialog: MatDialog, private router: Router, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar, private sanitizer: DomSanitizer) {
+  constructor(private fb: FormBuilder,private documentService: DocumentService, private dialog: MatDialog, private router: Router, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar, private sanitizer: DomSanitizer) {
 
   }
 
@@ -175,7 +181,8 @@ export class UserProjectComponent {
 
 
   }
-  
+
+
   /**
    * Loads folders and their files from the server
    */
@@ -206,11 +213,9 @@ export class UserProjectComponent {
   private processFiles(): void {
     this.processedFolders = {};
     for (const folderName of this.folderNames) {
-      const allFiles = this.folders[folderName] || [];
-      const pdfFiles = allFiles.filter(f => !/sectionsPDFs?\//i.test(f.key) &&( f.key.toLowerCase().endsWith('.pdf')));
-      console.log(pdfFiles);
-      // const pdfFiles = allFiles.filter(f => !f.key.endsWith('/'))
-      this.processedFolders[folderName] = pdfFiles.map(pdfFile => {
+        const allFiles = this.folders[folderName] || [];
+        const pdfFiles = allFiles.filter(f => !/sectionsPDFs?\//i.test(f.key) &&( f.key.toLowerCase().endsWith('.pdf')));
+        this.processedFolders[folderName] = pdfFiles.map(pdfFile => {
         const baseKeyWithPdf = pdfFile.key;
         const lastSlashIndex = baseKeyWithPdf.lastIndexOf("/");
         const pathBeforeFile = baseKeyWithPdf.substring(0, lastSlashIndex);
@@ -345,6 +350,7 @@ export class UserProjectComponent {
       }
     });
   }
+
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
@@ -549,14 +555,13 @@ export class UserProjectComponent {
     this.processProgress = 0;
     this.processingMap[key] = true;
     this.viewEnabledMap[key]=false;
+    
      
     this.documentService.requestDocumentProcessing(filePath).subscribe((event:any)=>{
-          // this.startProgress();
-
+          
           if (event.type === HttpEventType.UploadProgress) {
             const actualProgress = Math.round(80 * event.loaded / (event.total || 1));
             this.smoothProgressUpdate(actualProgress);
-            
           } 
           
           else if (event.type === HttpEventType.Response) {
@@ -565,15 +570,11 @@ export class UserProjectComponent {
               this.processingMap[key] = false;
               this.snackBar.open('File Processed Successfully', 'Close', { duration: 3000 });
               this.processButtonEnabled = true;
-              
+              this.refreshFiles();
             }
-
+            
           }
-          // else{
-          //   this.snackBar.open('Upload failed', 'Close', { duration: 3000 });
-          //   this.processingMap[key] = false;
-
-          // }
+    
       this.viewEnabledMap[key]=true;
       
     })
@@ -603,6 +604,6 @@ completeProgressTo100() {
     } else {
       clearInterval(interval);
     }
-  }, ); // change delay for pace control
+  },30); // change delay for pace control
 }
 }

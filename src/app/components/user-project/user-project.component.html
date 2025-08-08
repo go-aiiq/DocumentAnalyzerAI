@@ -128,68 +128,67 @@
 
         <mat-list class="list-items" *ngIf="processedFolders[selectedFolder]?.length; else noFiles">
           <ng-container *ngFor="let file of processedFolders[selectedFolder]">
-            <mat-list-item class="file-list-item">
-              <div class="file-content">
-                <div class="file-info">
-                  <div class="file-name">
-                    <span class="filename-text">{{ getFileName(file.key) }}</span>
-                    <small *ngIf="file.size !== undefined" class="file-size">{{ file.size | filesize }}</small>
+            <mat-expansion-panel>
+              <mat-expansion-panel-header style="height: fit-content;">
+                <mat-list-item class="file-list-item">
+                  <div class="file-content">
+                    <div class="file-info">
+                      <div class="file-name">
+                        <span class="filename-text">{{ getFileName(file.key) }}</span>
+                        <small *ngIf="file.size !== undefined" class="file-size">{{ file.size | filesize }}</small>
+                      </div>
+                    </div>
+    
+                    <div class="file-actions">
+                      <ng-container >
+                        
+                      
+                      <span matTooltip="Processing..." matTooltipPosition="below">
+                        
+                         <div class="spinner-wrapper" *ngIf="processingMap[file.url]">
+                          <mat-spinner *ngIf="processingMap[file.url]" diameter="25"></mat-spinner>
+                         <div class="progress-label">{{ processProgress }}%</div>
+                         <!-- <mat-progress-spinner 
+                              mode="determinate"
+                              [value]="processProgress"
+                              color="primary"
+                              diameter="25"
+                              strokeWidth="3">
+                            </mat-progress-spinner>
+                            <div class="progress-label">{{ processProgress }}%</div> -->
+                             <!-- <div class="checkmark" *ngIf="showCheckmark">
+                                <span>  ✔️</span> -->
+                             <!-- </div>  -->
+                            </div>
+                      </span>
+                      <button mat-icon-button
+                              matTooltip="Process"
+                              matTooltipPosition="below"
+                              [disabled]="processingMap[file.url]"
+                              (click)="$event.stopPropagation(); processDocument(file.url)">
+                        <mat-icon>sync</mat-icon>
+                      </button>
+                      </ng-container>
+                      
+    
+                      <ng-container *ngIf="file.hasError && !file.isProcessing">
+                        <mat-icon color="warn" matTooltip="Error processing file">error</mat-icon>
+                      </ng-container>
+    
+                      <a (click)="$event.stopPropagation();" [href]="file.url" download>
+                        <button mat-icon-button matTooltip="Download" matTooltipPosition="below">
+                          <mat-icon>download</mat-icon>
+                        </button>
+                      </a>
+                      <button mat-icon-button matTooltip="Delete" matTooltipPosition="below" (click)="$event.stopPropagation(); deleteFile(file.key)" *ngIf="!file.isProcessing">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
                   </div>
-                </div>
-
-                <div class="file-actions">
-                  <ng-container >
-                    
-                  
-                  <span matTooltip="Processing..." matTooltipPosition="below">
-                    
-                     <div class="spinner-wrapper" *ngIf="processingMap[file.url]">
-                      <mat-spinner *ngIf="processingMap[file.url]" diameter="25"></mat-spinner>
-                     <div class="progress-label">{{ processProgress }}%</div>
-                     <!-- <mat-progress-spinner 
-                          mode="determinate"
-                          [value]="processProgress"
-                          color="primary"
-                          diameter="25"
-                          strokeWidth="3">
-                        </mat-progress-spinner>
-                        <div class="progress-label">{{ processProgress }}%</div> -->
-                         <!-- <div class="checkmark" *ngIf="showCheckmark">
-                            <span>  ✔️</span> -->
-                         <!-- </div>  -->
-                        </div>
-                  </span>
-                  <button mat-icon-button
-                          matTooltip="Process"
-                          matTooltipPosition="below"
-                          [disabled]="processingMap[file.url]"
-                          (click)="processDocument(file.url)">
-                    <mat-icon>sync</mat-icon>
-                  </button>
-                  </ng-container>
-                  
-
-                  <ng-container *ngIf="file.hasError && !file.isProcessing">
-                    <mat-icon color="warn" matTooltip="Error processing file">error</mat-icon>
-                  </ng-container>
-
-                  <ng-container *ngIf="file.hasJson || viewEnabledMap[file.url]">
-                    <button mat-icon-button matTooltip="View" matTooltipPosition="below" (click)="viewResults(file.url)" [disabled]="processingMap[file.url]">
-                      <mat-icon>visibility</mat-icon>
-                    </button>
-                  </ng-container>
-
-                  <a [href]="file.url" download>
-                    <button mat-icon-button matTooltip="Download" matTooltipPosition="below">
-                      <mat-icon>download</mat-icon>
-                    </button>
-                  </a>
-                  <button mat-icon-button matTooltip="Delete" matTooltipPosition="below" (click)="deleteFile(file.key)" *ngIf="!file.isProcessing">
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </div>
-              </div>
-            </mat-list-item>
+                </mat-list-item>
+              </mat-expansion-panel-header>
+              <app-results [filePath]='file.url' ></app-results>
+            </mat-expansion-panel>
           </ng-container>
         </mat-list>
 

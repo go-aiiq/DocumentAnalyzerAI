@@ -14,7 +14,7 @@
 
  <div class="data-panel">
   <div>
-    <ng-container *ngIf="extractedData">
+    <ng-container *ngIf="extractedData; else NoExtractedDataView">
       <h3>Extracted Data</h3>
       <mat-divider></mat-divider>
 
@@ -37,6 +37,11 @@
         </div>
       </form>
     </ng-container>
+     <ng-template #NoExtractedDataView>
+        <span style="font-style: italic; color: grey;">
+      Process Document to View Extracted Data...
+      </span>
+     </ng-template>
   </div>
   </div>
 </div>

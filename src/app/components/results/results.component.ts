@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DocumentService } from '../../services/document.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -20,11 +20,14 @@ import { MatButtonModule } from '@angular/material/button';
       ReactiveFormsModule, MatProgressSpinnerModule, MatInputModule, MatButtonModule ]
 })
 export class ResultsComponent implements OnInit {
+
+  @Input()
+  filePath: any;
+ 
   currentPdf: SafeResourceUrl | null = null;
   formData: Record<string, any> = {};
   extractedData: any = null;
-  filePath: any;
-
+  
   constructor(
     private documentService: DocumentService,
     private route: ActivatedRoute,
@@ -34,9 +37,7 @@ export class ResultsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.route.queryParams.subscribe((params:any) => {
-      this.viewResults(params.filePath)
-    })
+    this.viewResults(this.filePath)
   }
 
   async handleViewDocument(filename: string): Promise<void> {
@@ -68,9 +69,9 @@ export class ResultsComponent implements OnInit {
   }
 
   handleSubmit(): void {
-    this.route.queryParams.subscribe((params:any) => {
-      this.filePath=params.filePath
-    })
+    // this.route.queryParams.subscribe((params:any) => {
+    //   this.filePath=params.filePath
+    // })
     
     this.documentService.submitResult(this.filePath,this.formData).subscribe({
       next: (res:any) => {
@@ -90,7 +91,7 @@ export class ResultsComponent implements OnInit {
       this.extractedData=extractedDataFulldata;
       this.formData = { ...this.extractedData }
       this.handleViewDocument(filePath)
-    })
+   })
   }
 
   resetFormData(): void {
