@@ -35,6 +35,8 @@ export class PdfViewerComponent implements OnInit ,OnChanges{
   createdSections:any[]=[];
   selectedSection!: Section;
   pdfDownloading: boolean = false;
+  newSection:Section={title:'',startPage:1, endPage:1};
+  numPages!:number;
 
  constructor(private documentService:DocumentService, private selectedPagesService: SelectedPagesService,private snackBar:MatSnackBar){
   pdfjsLib.GlobalWorkerOptions.workerSrc  = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
@@ -73,7 +75,7 @@ export class PdfViewerComponent implements OnInit ,OnChanges{
     }
     this.pageImages = [];
     this.isRendering = true;
-    const numPages = this.pdfDoc.numPages;
+    this.numPages = this.pdfDoc.numPages;
  
     for (let i = 1; i <= this.pdfDoc.numPages; i++) {
       const page = await this.pdfDoc.getPage(i);
@@ -95,10 +97,11 @@ export class PdfViewerComponent implements OnInit ,OnChanges{
   toggleSelection(index: number, event: MouseEvent) {
     if (event.shiftKey && this.lastClickedIndex !== null) {
       const [start, end] = [this.lastClickedIndex, index].sort((a, b) => a - b);
+      if (start < end) {
       for (let i = start; i <= end; i++) this.selectedPages.push(i);
-    } else {
+    } }
+    else {
       if (this.selectedPages.includes(index)) {
-  
         const removeIndex = this.selectedPages.indexOf(index);
         if (removeIndex > -1) {
           this.selectedPages.splice(removeIndex, 1);
@@ -106,9 +109,19 @@ export class PdfViewerComponent implements OnInit ,OnChanges{
       } else {
         this.selectedPages.push(index);
       }
-      this.selectedPagesService.multicast(this.selectedPages)
+      
       this.lastClickedIndex = index;
     }
+      if (this.selectedPages.length > 0) {
+    const sorted = [...this.selectedPages].sort((a, b) => a - b);
+    this.newSection.startPage = sorted[0];
+    this.newSection.endPage = sorted[sorted.length - 1];
+  } else {
+    this.newSection.startPage = 1;
+    this.newSection.endPage = 1;
+  }
+
+    this.selectedPagesService.multicast(this.selectedPages)
   }
 
   getFileName(key: string){
@@ -159,4 +172,23 @@ export class PdfViewerComponent implements OnInit ,OnChanges{
       pageElement.scrollIntoView({ behavior: 'smooth' });
     }
   }
+
+onStartPageSelected(pageNumber: number) {
+  this.selectPage(pageNumber);
+  console.log(pageNumber);
+}
+
+onEndPageSelected(pageNumber: number) {
+  this.selectPage(pageNumber);
+}
+
+selectPage(pageNumber: number) {
+  const index = pageNumber - 1;
+  // if (index < 0 || index >= this.pageImages.length) {
+  //   alert(`Page ${pageNumber} is out of range.`);
+  //   return;
+  // }
+  const fakeEvent = { shiftKey: false } as MouseEvent;
+  this.toggleSelection(index, fakeEvent);
+}
 }

@@ -25,11 +25,16 @@ export class AddSectionsComponent implements OnInit,OnChanges {
   @Input() selectedFile!:string;
   @Input() selectedSection!: Section;
   @Input() selectedFolder!:any;
+  @Input() totalPages!:number;
   createdSections:any[]=[];
   @Output() sectionCreated = new EventEmitter<{
     title: string;
     pages: number[];
   }>();
+  @Output() startPageSelected = new EventEmitter<number>();
+  @Output() endPageSelected = new EventEmitter<number>();
+
+
   availableSections:string[] = [];
   sections:Section[]=[];
   newSection:Section={title:'',startPage:1, endPage:1};
@@ -63,12 +68,24 @@ export class AddSectionsComponent implements OnInit,OnChanges {
     return Array.from(this.selectedPages).sort((a, b) => a - b);
   }
 
+  onStartPageChange(page: number) {
+  this.startPageSelected.emit(page);
+  }
+
+  onEndPageChange(page: number) {
+  this.endPageSelected.emit(page);
+}
+
   getSections(){
     this.documentService.getAvailableSections().subscribe((sections:string[])=>{
       this.availableSections=sections;
     });
   }
+  get isPageRangeInvalid():boolean{
+    return this.newSection.startPage > this.newSection.endPage;
+  }
 
+ 
   updateSectionRange() {
     const sorted = [...this.selectedPages].sort((a, b) => a - b);
     if (sorted.length) {
@@ -106,8 +123,8 @@ export class AddSectionsComponent implements OnInit,OnChanges {
   {
     if (
       this.newSection.title &&
-      this.newSection.startPage != null &&
-      this.newSection.endPage != null
+      (this.newSection.startPage != null && this.newSection.startPage<=this.totalPages) &&
+      (this.newSection.endPage != null  && this.newSection.endPage<=this.totalPages)
     ) {
       this.sectionCreated.emit({
         title: this.newSection.title,
@@ -117,7 +134,7 @@ export class AddSectionsComponent implements OnInit,OnChanges {
         ]
       });
       this.documentService.addSection(this.newSection,this.selectedFile).subscribe(res=>{
-        this.resetForm()
+        this.resetForm();
         this.snackBar.open('Section added successfully!', 'Close', {
         panelClass:['success-snackbar'],  
         duration: 3000,

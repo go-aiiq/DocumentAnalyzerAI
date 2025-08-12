@@ -306,9 +306,7 @@ class S3Service {
  
   async storeResults(folderPath,fileName,jsonString){
     try{
-      // console.log("result: ",JSON.stringify(jsonString));
-      // const userId = req.cookie()
-      const params = {
+    const params = {
     Bucket: this.bucketName,
     Key: `${folderPath}extractedData/${fileName}.json`, // Unique filename
     Body: jsonString,
@@ -328,7 +326,7 @@ class S3Service {
 }catch(err){
 console.log(`message: Unsuccessful Upload`, err );
 }
-  }
+}
   //store sections
   async storeSections(sections,fileurl){
     try{
@@ -782,6 +780,7 @@ try{
   const match = decodedUrl.match(/amazonaws\.com\/([^?]+)/);
   const folderpathmatch = match? match[1] : null;
   const folderpath = folderpathmatch.substring(0, folderpathmatch.lastIndexOf('/'))
+  const folderName=folderpath.split('/').pop();
   if (!match || !match[1]) {
   console.error('Invalid S3 URL format');
   return [];
@@ -796,17 +795,12 @@ try{
   console.log(pageRange);
 
   // Get pdf doc
-  const getParams={
-    Bucket:this.bucketName,
-    Key: fileKey
-  }
-  
       const inputPdf = await this.s3.getObject({ Bucket: this.bucketName, Key: fileKey }).promise();
-    fs.writeFileSync(inputPath, inputPdf.Body);
-    const pdfReader = muhammara.createReader(inputPath);
-const totalPages = pdfReader.getPagesCount();
-    // for (const pageIndex of pageRange) {
-      const outputFilename = `${section.title}.pdf`;      
+      fs.writeFileSync(inputPath, inputPdf.Body);
+      const pdfReader = muhammara.createReader(inputPath);
+      const totalPages = pdfReader.getPagesCount();
+      // for (const pageIndex of pageRange) {
+      const outputFilename = `${folderName}_${section.title}.pdf`;      
       const outputPath = outputFilename.replace(/[\/:*?"<>|\\]/g, '_');
       const pdfWriter = muhammara.createWriter(outputPath);
       const copyingContext = pdfWriter.createPDFCopyingContext(pdfReader);
@@ -817,24 +811,24 @@ const totalPages = pdfReader.getPagesCount();
       pdfWriter.end();
 
       const fileBuffer = fs.readFileSync(outputPath);
-      const outputKey = `${section.title}.pdf`;
+      
 
 
 
   await this.s3.putObject({
     Bucket: this.bucketName,
-    Key: `${folderpath}/sectionsPDF/${section.title}.pdf`,
+    Key: `${folderpath}/sectionsPDF/${outputFilename}`,
     Body: fileBuffer,
     ContentType: 'application/pdf'
   }).promise();
  
     const url =  this.s3.getSignedUrl('getObject', {
     Bucket: this.bucketName,
-    Key: `${folderpath}/sectionsPDF/${section.title}.pdf`,
+    Key: `${folderpath}/sectionsPDF/${outputFilename}`,
     Expires: 60 * 15,
-    ResponseContentDisposition: `attachment; filename="${section.title}.pdf"`
+    ResponseContentDisposition: `attachment; filename="${outputFilename}"`
   })
-  const sectionPDF=`${section.title}.pdf`;
+  const sectionPDF=`${outputFilename}`;
   return {url,sectionPDF};
 }
 catch(e){

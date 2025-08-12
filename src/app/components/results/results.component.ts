@@ -95,8 +95,13 @@ export class ResultsComponent implements OnInit {
   }
 
   resetFormData(): void {
-    for (const key of Object.keys(this.formData)) {
-      this.formData[key] = '';
-    }
+    // for (const key of Object.keys(this.formData)) {
+    //   this.formData[key] = '';
+    // }
+    this.documentService.getResults(this.filePath).subscribe((res: any) => {
+      let extractedDataFulldata = JSON.parse(res);
+      this.extractedData=extractedDataFulldata;
+      this.formData = { ...this.extractedData };      
+   })
   }
 }

@@ -184,7 +184,7 @@
   flex-wrap: wrap;
   // gap: 20px;
   padding:5px;
-  margin-left:35px;
+  margin-left:10px;
 }
 
 // .thumbnail {
@@ -216,13 +216,14 @@
 }
 
 .thumbnail {
-  width: 446px;
-  height: 600px;
+  // width: 446px;
+  // height: 600px;
   border: 2px solid transparent;
   cursor: pointer;
   position: relative;
   box-sizing: border-box;
-  flex: 0 0 auto; /* prevents shrinking */
+  // flex: 0 0 auto; /* prevents shrinking */
+  // flex: 1 1 calc(33.333% - 20px);
   margin-bottom: 1px;
 }
 

@@ -8,7 +8,7 @@
     </mat-option>
   </mat-select>
   </mat-form-field>
-  <app-add-sections [selectedSection]="selectedSection" [selectedPages]="selectedPages" [selectedFile]="selectedFile" [selectedFolder]="selectedFolder"></app-add-sections>
+  <app-add-sections [selectedSection]="selectedSection" [selectedPages]="selectedPages" [selectedFile]="selectedFile" [selectedFolder]="selectedFolder" (startPageSelected)="onStartPageSelected($event)" (endPageSelected)="onEndPageSelected($event)" [totalPages]="numPages"></app-add-sections>
 </div>
 
 
@@ -26,7 +26,7 @@
     <img [src]="img" />
     <span class="page-number">Page {{ i + 1 }}</span>
   </div>
-  <mat-progress-spinner *ngIf="isRendering" diameter="50"></mat-progress-spinner>
+  <mat-spinner *ngIf="isRendering" diameter="30" style="margin-left:200px" ></mat-spinner>
 </div>
 </div>
 

@@ -17,27 +17,30 @@
    Start Page
   <mat-form-field appearance="fill" class="full-width">
     <mat-label>Start Page</mat-label>
-    <input matInput type="number" min="0" [(ngModel)]="newSection.startPage" />
+    <input matInput type="number" [max]="totalPages" min="0" [(ngModel)]="newSection.startPage" (ngModelChange)="onStartPageChange(newSection.startPage)"/>
   </mat-form-field>
 
   End Page 
   <mat-form-field appearance="fill" class="full-width">
     <mat-label>End Page</mat-label>
-    <input matInput type="number" min="0" [(ngModel)]="newSection.endPage" />
+    <input matInput type="number" [max]="totalPages" min="0" [(ngModel)]="newSection.endPage" (ngModelChange)="onEndPageChange(newSection.endPage)"  />
   </mat-form-field>
 
+<div *ngIf="isPageRangeInvalid" class="error-message">
+  ⚠️ Start Page cannot be greater than End Page.
+</div>
   <!-- Add Button -->
   <button
     mat-raised-button
     color="primary"
-    (click)="addSection()" [disabled]="enableEdit"
+    (click)="addSection()" [disabled]="enableEdit || isPageRangeInvalid " 
   >
     Add Section
   </button>
     <button
     mat-raised-button
     color="primary"
-    (click)="updateSection()" [disabled]="!enableEdit"
+    (click)="updateSection()" [disabled]="!enableEdit || isPageRangeInvalid"
   >
     Save Section
   </button>
