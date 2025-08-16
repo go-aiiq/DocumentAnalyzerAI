@@ -33,17 +33,23 @@
 
 <div class="right-panel">
   <div class="sticky-header">
-  <div style="display: flex; align-items: center; justify-content: space-between ; margin-top:-20px;">
+  <div style="display: flex; align-items: center; justify-content: space-between ; margin-top:-15px;">
   <h3>Sections</h3>
-  <div style="display: flex; justify-content: flex-end; margin:2px;">
-  <button  mat-fab (click)="getCreatedSections()">
+  <div style="display: flex; align-items: center; justify-content: space-between ; margin-top:-20px;">
+    <div style="display: flex; justify-content: flex-end;margin-top:20px;">
+   <button  mat-icon-button matTooltip="Download all Sections" (click)="downloadAllSections()" class="download" *ngIf="enableDownload">
+  <mat-icon>download</mat-icon>
+  </button>
+  </div>
+  <div style="display: flex; justify-content: flex-end; margin-top:20px; ">
+  <button  mat-icon-button (click)="getCreatedSections()" class="refresh-button">
   <mat-icon>refresh</mat-icon>
   </button>
-  
   </div>
-  
   </div>
 </div>
+</div>
+
 <mat-list *ngIf="selectedFile ; else noFileSelected">
   <mat-list-item *ngFor="let section of createdSections" class="transparent-card">
      <div class="section">

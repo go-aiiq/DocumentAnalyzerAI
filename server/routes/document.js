@@ -736,4 +736,17 @@ router.post('/downloadSection',async(req,res) => {
 }
 )
 
+router.post('/downloadAllSections',async(req,res)=>{
+  try{
+    const fileurl = req.body.fileurl;
+    const response = await s3Service.downloadAllSections(fileurl);
+    res.json(response);
+    console.log(response);
+  }
+  catch(e){
+    console.log("Error downloading all sections")
+    res.json(e);
+  }
+})
+
 module.exports = router;

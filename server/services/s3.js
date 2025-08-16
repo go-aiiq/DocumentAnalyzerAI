@@ -5,6 +5,8 @@ const user = require('../server.js');
 const fs = require('fs');
 const { execFile } = require('child_process');
 const muhammara =require('muhammara');
+const archiver = require('archiver');
+
 class S3Service {
   constructor() {
     this.bucketName = process.env.S3_BUCKET_NAME;
@@ -434,15 +436,85 @@ console.log(`message: Unsuccessful Upload`, err );
   console.log(err);
   }}
 
-  // async getResult(folderPath,fileName){
-  //    const params = {
-  //   Bucket: bucketName,
-  //   Key: key
-  // };
-  //   const data = await this.s3.getObject(params).promise();
-  //   return data.Body;
 
-  // }
+
+async downloadAllSections(fileurl) {
+  try {
+    const decodedUrl = decodeURIComponent(fileurl);
+    const match = decodedUrl.match(/amazonaws\.com\/([^?]+)/);
+
+    if (!match || !match[1]) {
+      console.error('Invalid S3 URL format');
+      return [];
+    }
+
+    const folderpathmatch = match[1];
+    const folderpath = folderpathmatch.substring(0, folderpathmatch.lastIndexOf('/'));
+    const filename = folderpathmatch.split('/').pop()?.replace(/\.pdf$/, "") || '';
+    const folderName = folderpath.split('/').pop();
+    console.log(folderName);
+
+    // Check if folder exists
+    try {
+      await this.s3.headObject({ Bucket: this.bucketName, Key: `${folderpath}/sections/${filename}.json` }).promise();
+    } catch (err) {
+      console.error("File doesn't exist or is inaccessible", err);
+      return false;
+    }
+
+    const jsonData = await this.s3.getObject({ Bucket: this.bucketName, Key: `${folderpath}/sections/${filename}.json` }).promise();
+    const sectionsData = JSON.parse(jsonData.Body.toString('utf-8'));
+
+    const pdfKey =  `${folderpath}/${filename}.pdf`;
+    const pdfData = await this.s3.getObject({ Bucket: this.bucketName, Key: pdfKey }).promise();
+    fs.writeFileSync('source.pdf', pdfData.Body);
+
+    
+    const output = fs.createWriteStream(`${filename}_sections.zip`);
+    const zip = archiver('zip', { zlib: { level: 9 } });
+    zip.pipe(output);
+
+    sectionsData.forEach((section, index) => {
+    const { startPage, endPage, title } = section;
+    const outputFilename = path.join(__dirname, `${folderName}_${title.replace(/[\/:*?"<>|\\]/g, '_') || 'section'}.pdf`);
+    const outputPath = outputFilename.replace(/[\/:*?"<>|\\]/g, '_');
+
+    const writer = muhammara.createWriter(outputPath);
+    writer.appendPDFPagesFromPDF('source.pdf', { 
+      type: muhammara.eRangeTypeSpecific,
+      specificRanges: [[startPage - 1, endPage - 1]] // zero-based indexing
+    });
+    writer.end();
+
+    zip.append(fs.createReadStream(outputPath), { name: `${folderName}_${title.replace(/[\/:*?"<>|\\]/g, '_') || 'section'}.pdf` });
+  });
+
+    zip.finalize();
+    const zipBuffer = fs.readFileSync(`${filename}_sections.zip`);
+
+    console.log(' PDF sections extracted and zipped successfully.');
+    
+      await this.s3.putObject({
+    Bucket: this.bucketName,
+    Key: `${folderpath}/sectionsPDF/${filename}_sections.zip`,
+    Body: zipBuffer,
+    ContentType: 'application/pdf'
+  }).promise();
+ 
+    const url =  this.s3.getSignedUrl('getObject', {
+    Bucket: this.bucketName,
+    Key: `${folderpath}/sectionsPDF/${filename}_sections.zip`,
+    Expires: 60 * 15,
+    ResponseContentDisposition: `attachment; filename="${filename}_sections.zip"`
+  })
+  const allsectionsZip=`${filename}_sections.zip`;
+  return {url,allsectionsZip};
+   
+  } catch (e) {
+    console.log("Error downloading all sections", e);
+  }
+}
+
 
 
   async deleteFile(fileUrl) {
@@ -724,50 +796,6 @@ async updateSection(fileurl,section){
 
   catch(e){
     console.log(e);
-  }
-}
-
-
-
-
-
-async cleanPdfFromS3(key) {
-  const tempInputPath = path.join(__dirname, 'input.pdf');
-  const tempOutputPath = path.join('/tmp', 'output.pdf');
-
-  try {
-    // Step 1: Download PDF from S3
-    const data = await this.s3.getObject({ Bucket: this.bucketName, Key: key }).promise();
-    fs.writeFileSync(tempInputPath, data.Body);
-
-    // Step 2: Run qpdf to linearize
-    await new Promise((resolve, reject) => {
-      execFile('/opt/bin/qpdf', ['--linearize', tempInputPath, tempOutputPath], (err, stdout, stderr) => {
-        if (err) return reject(new Error(stderr || err.message));
-        resolve(stdout);
-      });
-    });
-    if (!data.Body) throw new Error('S3 object has no body');
-if (!fs.existsSync(tempOutputPath)) throw new Error('qpdf output file not found');
-
-
-    // Step 3: Upload cleaned PDF back to S3
-    const cleanedPdf = fs.readFileSync(tempOutputPath);
-    const cleanedKey = key.replace('.pdf', '.cleaned.pdf');
-
-    await s3.putObject({
-      Bucket: this.bucketName,
-      Key: key,
-      Body: cleanedPdf,
-      ContentType: 'application/pdf',
-    }).promise();
-
-    console.log('Cleaned PDF uploaded to:', cleanedKey);
-    return cleanedKey;
-
-  } catch (err) {
-    console.error('Error cleaning PDF:', err);
-    throw err;
   }
 }
 

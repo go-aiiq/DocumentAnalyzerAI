@@ -342,3 +342,17 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   
 }
+
+/* Download Button Hover */
+.download:hover {
+  background-color: #e0e0e0; 
+  transition: background-color 0.3s ease;
+  transform: scale(1.05);
+}
+
+/* Refresh Button Hover */
+.refresh-button:hover {
+  background-color: #e0e0e0; 
+  transition: background-color 0.3s ease;
+  transform: scale(1.05);
+}

@@ -358,6 +358,12 @@ deleteFolder(folderName: string): Observable<any> {
     } );
   }
 
+  downloadAllSections(fileurl:string){
+    return this.http.post(`${this.baseUrl}/downloadAllSections`,{
+      fileurl:fileurl
+    });
+  }
+
   triggerRefresh() {
     this.refreshSectionsSubject.next();
   }
@@ -448,4 +454,6 @@ deleteFolder(folderName: string): Observable<any> {
       section:section
     });
   }
+
+  
 }

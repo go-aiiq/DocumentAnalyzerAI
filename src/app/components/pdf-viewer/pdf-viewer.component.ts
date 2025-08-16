@@ -37,6 +37,7 @@ export class PdfViewerComponent implements OnInit ,OnChanges{
   pdfDownloading: boolean = false;
   newSection:Section={title:'',startPage:1, endPage:1};
   numPages!:number;
+  enableDownload:boolean=false;
 
  constructor(private documentService:DocumentService, private selectedPagesService: SelectedPagesService,private snackBar:MatSnackBar){
   pdfjsLib.GlobalWorkerOptions.workerSrc  = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
@@ -130,7 +131,8 @@ export class PdfViewerComponent implements OnInit ,OnChanges{
   
   getCreatedSections(){
     this.documentService.getCreatedSections(this.selectedFile).subscribe((res:any)=>{
-      this.createdSections = typeof res === 'string' ? JSON.parse(res) : res;    
+      this.createdSections = typeof res === 'string' ? JSON.parse(res) : res; 
+      this.enableDownload = this.createdSections?.length>0;   
     })
   };
 
@@ -158,6 +160,22 @@ export class PdfViewerComponent implements OnInit ,OnChanges{
       this.snackBar.open(`Downloaded ${section.title} Section`,"Close",{ duration: 3000 });
     })
 
+  }
+
+  downloadAllSections(){
+    this.documentService.downloadAllSections(this.selectedFile).subscribe((res:any)=>{
+      console.log("response: ",res);
+      const response =res;     
+      const link = document.createElement('a');
+      link.href = response.url;
+      const filename=response.allsectionsZip;
+      link.download = filename;
+            document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      this.snackBar.open(`Downloaded ${filename}_sections.zip`,"Close",{ duration: 3000 });
+    })
   }
 
   onSectionSelect(section: Section) {
