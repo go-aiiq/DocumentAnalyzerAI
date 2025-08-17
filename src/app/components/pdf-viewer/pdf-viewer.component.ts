@@ -56,6 +56,8 @@ export class PdfViewerComponent implements OnInit ,OnChanges{
     this.pageImages=[];
     this.createdSections=[];
     this.selectedPages=[];
+    this.getCreatedSections();
+    
   }
  }
 

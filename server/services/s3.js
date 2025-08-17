@@ -438,82 +438,80 @@ console.log(`message: Unsuccessful Upload`, err );
 
 
 
-async downloadAllSections(fileurl) {
-  try {
-    const decodedUrl = decodeURIComponent(fileurl);
-    const match = decodedUrl.match(/amazonaws\.com\/([^?]+)/);
-
-    if (!match || !match[1]) {
-      console.error('Invalid S3 URL format');
-      return [];
-    }
-
-    const folderpathmatch = match[1];
-    const folderpath = folderpathmatch.substring(0, folderpathmatch.lastIndexOf('/'));
-    const filename = folderpathmatch.split('/').pop()?.replace(/\.pdf$/, "") || '';
-    const folderName = folderpath.split('/').pop();
-    console.log(folderName);
-
-    // Check if folder exists
+  async downloadAllSections(fileurl) {
     try {
-      await this.s3.headObject({ Bucket: this.bucketName, Key: `${folderpath}/sections/${filename}.json` }).promise();
-    } catch (err) {
-      console.error("File doesn't exist or is inaccessible", err);
-      return false;
-    }
+      const decodedUrl = decodeURIComponent(fileurl); 
+      const match = decodedUrl.match(/amazonaws\.com\/([^?]+)/);
+      if (!match || !match[1]) { console.error('Invalid S3 URL format'); return []; } 
+      const folderpathmatch = match[1]; 
+      const folderpath = folderpathmatch.substring(0, folderpathmatch.lastIndexOf('/'));
+      const filename = folderpathmatch.split('/').pop()?.replace(/\.pdf$/, "") || '';
+      const folderName = folderpath.split('/').pop(); console.log(folderName); // Check if folder exists 
+      try { 
+        await this.s3.headObject({ Bucket: this.bucketName, Key: `${folderpath}/sections/${filename}.json` }).promise();
+       }
+       catch (err) { 
+        console.error("File doesn't exist or is inaccessible", err);
+        return false; 
+      } 
+      const jsonData = await this.s3.getObject({ Bucket: this.bucketName, Key: `${folderpath}/sections/${filename}.json` }).promise();
+      const sectionsData = JSON.parse(jsonData.Body.toString('utf-8'));
+      const pdfKey = `${folderpath}/${filename}.pdf`;
+      const pdfData = await this.s3.getObject({ Bucket: this.bucketName, Key: pdfKey }).promise();
 
-    const jsonData = await this.s3.getObject({ Bucket: this.bucketName, Key: `${folderpath}/sections/${filename}.json` }).promise();
-    const sectionsData = JSON.parse(jsonData.Body.toString('utf-8'));
+      fs.writeFileSync(path.join(__dirname, 'source.pdf'), pdfData.Body);
+      const zipFilePath = path.join(__dirname, `${filename}_sections.zip`);
+      const output = fs.createWriteStream(zipFilePath);
+      const zip = archiver('zip', { zlib: { level: 9 } });
+      zip.pipe(output);
 
-    const pdfKey =  `${folderpath}/${filename}.pdf`;
-    const pdfData = await this.s3.getObject({ Bucket: this.bucketName, Key: pdfKey }).promise();
-    fs.writeFileSync('source.pdf', pdfData.Body);
-
-    
-    const output = fs.createWriteStream(`${filename}_sections.zip`);
-    const zip = archiver('zip', { zlib: { level: 9 } });
-    zip.pipe(output);
-
-    sectionsData.forEach((section, index) => {
-    const { startPage, endPage, title } = section;
-    const outputFilename = path.join(__dirname, `${folderName}_${title.replace(/[\/:*?"<>|\\]/g, '_') || 'section'}.pdf`);
-    const outputPath = outputFilename.replace(/[\/:*?"<>|\\]/g, '_');
-
-    const writer = muhammara.createWriter(outputPath);
-    writer.appendPDFPagesFromPDF('source.pdf', { 
-      type: muhammara.eRangeTypeSpecific,
-      specificRanges: [[startPage - 1, endPage - 1]] // zero-based indexing
-    });
-    writer.end();
-
-    zip.append(fs.createReadStream(outputPath), { name: `${folderName}_${title.replace(/[\/:*?"<>|\\]/g, '_') || 'section'}.pdf` });
-  });
-
-    zip.finalize();
-    const zipBuffer = fs.readFileSync(`${filename}_sections.zip`);
-
-    console.log(' PDF sections extracted and zipped successfully.');
-    
-      await this.s3.putObject({
-    Bucket: this.bucketName,
-    Key: `${folderpath}/sectionsPDF/${filename}_sections.zip`,
-    Body: zipBuffer,
-    ContentType: 'application/pdf'
-  }).promise();
- 
-    const url =  this.s3.getSignedUrl('getObject', {
-    Bucket: this.bucketName,
-    Key: `${folderpath}/sectionsPDF/${filename}_sections.zip`,
-    Expires: 60 * 15,
-    ResponseContentDisposition: `attachment; filename="${filename}_sections.zip"`
-  })
-  const allsectionsZip=`${filename}_sections.zip`;
-  return {url,allsectionsZip};
+      for (const section of sectionsData)  {
+         const { startPage, endPage, title } = section;
+         const outputFilename = path.join(__dirname, `${folderName}_${title.replace(/[\/:*?"<>|\\]/g, '_') || 'section'}.pdf`); 
+         
+         const writer = muhammara.createWriter(outputFilename); 
+         writer.appendPDFPagesFromPDF(path.join(__dirname, 'source.pdf'), { type: muhammara.eRangeTypeSpecific, specificRanges: [[startPage - 1, endPage - 1]] // zero-based indexing 
+         }); 
+         writer.end();
+        //  zip.append(fs.createReadStream(outputFilename), { name: `${folderName}_${title.replace(/[\/:*?"<>|\\]/g, '_') || 'section'}.pdf` }); 
+         zip.file(outputFilename, { name: `${folderName}_${title.replace(/[\/:*?"<>|\\]/g, '_') || 'section'}.pdf` });
    
-  } catch (e) {
-    console.log("Error downloading all sections", e);
-  }
-}
+      };  
+      await new Promise((resolve, reject) => {
+      output.on('close', resolve);
+      zip.on('error', reject);
+      zip.finalize();
+    });
+      // zip.finalize();
+  
+        const zipBuffer = fs.readFileSync(zipFilePath); 
+        console.log(' PDF sections extracted and zipped successfully.'); 
+        await this.s3.putObject({ 
+            Bucket: this.bucketName, 
+            Key: `${folderpath}/sectionsPDF/${filename}_sections.zip`, 
+            Body: zipBuffer, 
+            ContentType: 'application/pdf' }).promise();
+        console.log("put object done") 
+        const url = this.s3.getSignedUrl('getObject', { 
+          Bucket: this.bucketName,
+          Key: `${folderpath}/sectionsPDF/${filename}_sections.zip`, 
+          Expires: 60 * 15, 
+          ResponseContentDisposition: `attachment; filename="${filename}_sections.zip"` 
+        });
+        console.log(url);
+        if (fs.existsSync(zipFilePath)) fs.unlinkSync(zipFilePath);
+        if (fs.existsSync(path.join(__dirname, 'source.pdf'))) fs.unlinkSync(path.join(__dirname, 'source.pdf'));
+        fs.readdirSync(__dirname).forEach(file => {
+         if (file.endsWith('.pdf')) {
+            fs.unlinkSync(path.join(__dirname, file));
+          }
+        });  
+
+        const allsectionsZip=`${filename}_sections.zip`; 
+        return {url,allsectionsZip}; 
+      } catch (e) { 
+        console.log("Error downloading all sections", e); }
+    }
 
 
 
@@ -801,6 +799,8 @@ async updateSection(fileurl,section){
 
 
 async downloadSection(fileurl,section){
+const inputPath = path.join(__dirname, 'input.pdf');
+let outputPath = '';
 try{
 
   // Get file and folder path
@@ -819,7 +819,7 @@ try{
   const startPage = section.startPage;
   const endPage = section.endPage;
   const pageRange = [startPage-1,endPage-1];
-  const inputPath=path.join(__dirname, 'input.pdf');
+  // const inputPath=path.join(__dirname, 'input.pdf');
   console.log(pageRange);
 
   // Get pdf doc
@@ -829,7 +829,8 @@ try{
       const totalPages = pdfReader.getPagesCount();
       // for (const pageIndex of pageRange) {
       const outputFilename = `${folderName}_${section.title}.pdf`;      
-      const outputPath = outputFilename.replace(/[\/:*?"<>|\\]/g, '_');
+      const outputFile = outputFilename.replace(/[\/:*?"<>|\\]/g, '_');
+      outputPath = path.join(__dirname, outputFile);
       const pdfWriter = muhammara.createWriter(outputPath);
       const copyingContext = pdfWriter.createPDFCopyingContext(pdfReader);
 
@@ -856,12 +857,30 @@ try{
     Expires: 60 * 15,
     ResponseContentDisposition: `attachment; filename="${outputFilename}"`
   })
+
   const sectionPDF=`${outputFilename}`;
   return {url,sectionPDF};
 }
 catch(e){
   console.log("Error downloading Section: ",e)
 }
+finally{
+   
+    // 🧹 Cleanup temp files
+    await new Promise(resolve => setTimeout(resolve, 100)); // Let OS release locks
+
+    const tempFiles = [outputPath];
+    for (const file of tempFiles) {
+      try {
+        if (fs.existsSync(file)) {
+          fs.unlinkSync(file);
+          console.log(`Deleted temp file: ${file}`);
+        }
+      } catch (err) {
+        console.warn(`Could not delete ${file}:`, err.message);
+      }
+    }
+  }
 }
 }
 
